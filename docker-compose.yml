@@ -3,6 +3,7 @@ services:
     build:
       context: ./docker/php
     container_name: dms_app
+    restart: unless-stopped # ← ここに追加
     volumes:
       - ./src:/var/www/html
     working_dir: /var/www/html
@@ -12,6 +13,7 @@ services:
   webserver:
     image: nginx:stable-alpine
     container_name: dms_nginx
+    restart: unless-stopped
     ports:
       - "8000:80"
     volumes:
