@@ -35,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('guest-access', function ($user) {
             return $user->auth_type === 2; // ゲストのみ
         });
+
+        Gate::define('verify-transactions', function ($user) {
+            return in_array((string) $user->auth_type, ['0', '1'], true);
+        });
     }
 }
 class RouteServiceProvider extends ServiceProvider

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StampItem;
+use App\Models\StampTransaction;
 
 class StockController extends Controller
 {
@@ -11,8 +12,10 @@ class StockController extends Controller
     {
         $items = StampItem::active()->ordered()->withStock()->get();
 
-        $totalAmount = $items->sum(fn ($i) => $i->stock * $i->face_value);
+        $totalAmount = $items->sum(fn($i) => $i->stock * $i->face_value);
 
-        return view('stamps.stock.index', compact('items', 'totalAmount'));
+        $unverifiedCount = StampTransaction::unverified()->count();
+
+        return view('stamps.stock.index', compact('items', 'totalAmount', 'unverifiedCount'));
     }
 }

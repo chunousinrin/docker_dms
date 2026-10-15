@@ -58,12 +58,26 @@ return new class extends Migration
             $t->string('note')->nullable();
             $t->unique(['inventory_audit_id', 'stamp_item_id']);
         });
+        Schema::create('stamp_transaction_verifications', function (Blueprint $t) {
+            $t->id();
+            // 1履歴につき確認は1回（履歴自体は更新不可のため、確認は別テーブルで持つ）
+            $t->foreignId('stamp_transaction_id')->unique()->constrained();
+            $t->foreignId('verifier_id')->constrained('users');   // 確認者（第三者）
+            $t->string('status');                                  // confirmed / discrepancy
+            $t->unsignedInteger('expected_qty');                   // 記録上の数量（絶対値）
+            $t->unsignedInteger('actual_qty');                     // 実物を確認した数量
+            $t->string('memo')->nullable();                        // 差異の内容など
+            $t->timestamp('verified_at');
+            $t->timestamps();
+            $t->index('status');
+        });
     }
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
+        Schema::dropIfExists('stamp_transaction_verifications');
         Schema::dropIfExists('inventory_audit_lines');
         Schema::dropIfExists('stamp_transactions');
         Schema::dropIfExists('inventory_audits');

@@ -15,9 +15,12 @@ class StampTransactionController extends Controller
     /** 入出庫履歴（絞り込み付き） */
     public function index(Request $request)
     {
-        $query = StampTransaction::with(['item', 'user'])
+        $query = StampTransaction::with(['item', 'user', 'verification.verifier'])
             ->when($request->filled('stamp_item_id'), fn($q) => $q->where('stamp_item_id', $request->stamp_item_id))
             ->when($request->filled('type'), fn($q) => $q->where('type', $request->type))
+            ->when($request->verification === 'unverified', fn($q) => $q->unverified())
+            ->when($request->verification === 'confirmed', fn($q) => $q->whereHas('verification', fn($v) => $v->where('status', 'confirmed')))
+            ->when($request->verification === 'discrepancy', fn($q) => $q->whereHas('verification', fn($v) => $v->where('status', 'discrepancy')))
             ->when($request->filled('user_id'), fn($q) => $q->where('user_id', $request->user_id))
             ->when($request->filled('from'), fn($q) => $q->whereDate('transacted_on', '>=', $request->from))
             ->when($request->filled('to'), fn($q) => $q->whereDate('transacted_on', '<=', $request->to))
@@ -76,6 +79,10 @@ class StampTransactionController extends Controller
             ]);
         });
 
-        return redirect()->route('stamps.transactions.index')->with('success', '登録しました');
+        $route = (string) auth()->user()->auth_type === '1'
+            ? 'stamps.transactions.create'   // 管理者：履歴一覧へ
+            : 'stamps.transactions.index';   // それ以外：続けて登録できる登録画面へ
+
+        return redirect()->route($route)->with('success', '登録しました');
     }
 }

@@ -24,9 +24,9 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body table-responsive p-0">
-        <table class="table text-nowrap">
+<div class="card search-card">
+    <div class="card-body table-responsive-custom p-0">
+        <table class="table-custom">
             <thead>
                 <tr>
                     <th>品目</th>
@@ -41,7 +41,7 @@
             <tbody>
                 @foreach ($audit->lines as $line)
                 <tr class="{{ $line->diff !== 0 ? 'table-warning' : '' }}">
-                    <td>{{ $line->item->name }}</td>
+                    <td>{{ $line->item->category_label }} - {{ $line->item->name }}</td>
                     <td class="text-right">¥{{ number_format($line->face_value) }}</td>
                     <td class="text-right">{{ number_format($line->book_qty) }}</td>
                     <td class="text-right">{{ number_format($line->counted_qty) }}</td>

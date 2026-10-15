@@ -93,13 +93,14 @@
                     <th>メモ</th>
                     <th>記録者</th>
                     <th>登録日時</th>
+                    <th>確認</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($transactions as $t)
                 <tr>
                     <td>{{ $t->transacted_on->format('Y-m-d') }}</td>
-                    <td>{{ $t->item->name }}</td>
+                    <td>{{ $t->item->category_label }} - {{ $t->item->name }}</td>
                     <td>
                         @php
                         $badge = ['in' => 'success', 'out' => 'danger', 'adjust' => 'warning'][$t->type] ?? 'secondary';
@@ -123,10 +124,40 @@
                         @endif
                     </td>
                     <td>{{ $t->created_at->format('Y-m-d H:i') }}</td>
+                    <td>
+                        @if (! $t->isVerifiable())
+                        <span class="text-muted">-</span>
+                        @elseif ($t->verification)
+                        @if ($t->verification->status === 'confirmed')
+                        <span class="badge badge-success">確認済</span>
+                        @else
+                        <span class="badge badge-danger">差異あり</span>
+                        <br><small class="text-danger">
+                            記録 {{ number_format($t->verification->expected_qty) }} /
+                            実物 {{ number_format($t->verification->actual_qty) }}
+                        </small>
+                        @endif
+                        <br><small class="text-muted">
+                            {{ $t->verification->verifier->name ?? '-' }}
+                            {{ $t->verification->verified_at->format('m/d H:i') }}
+                        </small>
+                        @if ($t->verification->memo)
+                        <br><small>{{ $t->verification->memo }}</small>
+                        @endif
+                        @else
+                        <span class="badge badge-warning">未確認</span>
+                        @can('verify-transactions')
+                        @if ($t->canBeVerifiedBy(auth()->user()))
+                        <a href="{{ route('stamps.transactions.verify.create', $t) }}"
+                            class="btn btn-xs btn-primary ml-1">確認する</a>
+                        @endif
+                        @endcan
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center text-muted">履歴がありません</td>
+                    <td colspan="9" class="text-center text-muted">履歴がありません</td>
                 </tr>
                 @endforelse
             </tbody>

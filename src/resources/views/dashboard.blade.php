@@ -72,6 +72,48 @@
         </div>
 
         <div class="row">
+            <div class="col-3">
+                <a href="{{ route('daily-reports.create') }}" class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="small-box m-0 text-center text-white font-weight-bold" style="background-color:#70BD29;">
+                            <h4 class="inner py-4">業務日報 </h4>
+                            <div class="icon">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                            <div class="small-box-footer  small text-white">daily reports</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="{{ route('purchase-orders.create') }}" class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="small-box m-0 text-center text-white font-weight-bold" style="background-color:#70BD29;">
+                            <h4 class="inner py-4">発注書 </h4>
+                            <div class="icon">
+                                <i class="fa-solid fa-file-shield"></i>
+                            </div>
+                            <div class="small-box-footer  small text-white">purchase orders</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-3">
+                <a href="{{ route('stamps.transactions.create') }}" class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="small-box m-0 text-center text-white font-weight-bold" style="background-color:#70BD29;">
+                            <h4 class="inner py-4">金券出納 </h4>
+                            <div class="icon">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div class="small-box-footer  small text-white">stamps transactions</div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
             <div class="card col-12">
                 <div class="card-body">
                     @can('manage-users')

@@ -75,7 +75,7 @@ class UserController extends Controller
         ]);
 
         return redirect()
-            ->route('master.users.index')
+            ->route('users.index')
             ->with('success', 'ユーザーを登録しました')
             ->with('generated_password', $password);
     }

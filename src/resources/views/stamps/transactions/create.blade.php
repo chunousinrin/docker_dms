@@ -13,20 +13,21 @@ $categories = \App\Models\StampItem::CATEGORIES;
 $presentCats = $items->pluck('category')->unique();
 @endphp
 
-<div class="row mt-1">
-    <div class="col-lg-8">
-        <div class="card card-outline card-primary">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 h6 font-weight-bold">
-                        <i class="fas fa-plus mr-1"></i>入出庫登録
-                    </h5>
-                    <a href="{{ route('master.stamp_items.index') }}" class="btn btn-sm btn-default">
-                        <i class="nav-icon fas fa-database mr-1"></i>金券マスタ</a>
+<form method="POST" action="{{ route('stamps.transactions.store') }}" id="tx-form">
+    @csrf
+
+    <div class="row mt-1">
+        <div class="col-lg-8">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="m-0 h6 font-weight-bold">
+                            <i class="fas fa-plus mr-1"></i>入出庫登録
+                        </h5>
+                        <a href="{{ route('master.stamp_items.index') }}" class="btn btn-sm btn-default">
+                            <i class="nav-icon fas fa-database mr-1"></i>金券マスタ</a>
+                    </div>
                 </div>
-            </div>
-            <form method="POST" action="{{ route('stamps.transactions.store') }}" id="tx-form">
-                @csrf
                 <input type="hidden" name="stamp_item_id" id="stamp_item_id" value="{{ old('stamp_item_id') }}">
 
                 <div class="card-body">
@@ -130,38 +131,39 @@ $presentCats = $items->pluck('category')->unique();
                     </div>
                 </div>
 
-            </form>
+            </div>
         </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card card-outline card-info">
-            <div class="card-header">
-                <h5 class="m-0 h6 font-weight-bold">
-                    <i class="fas fa-info-circle mr-1"></i>操作手順
-                </h5>
-            </div>
-            <div class="card-body">
-                <ol class="pl-3 mb-0">
-                    <li>入庫／出庫の種別を選択</li>
-                    <li>種類を選択</li>
-                    <li>金額を選択</li>
-                    <li>数量、日付を入力(必須項目)</li>
-                    <li>使用先・用途、メモを入力</li>
-                    <li>登録ボタンを押す</li>
-                </ol>
-                <span class="small">※レターパックを使用する際は、メモに追跡番号を入力してください。</span>
-            </div>
-            <div class="card-footer">
-                <div id="selected-summary" class="alert alert-info py-2 my-2" style="display:none"></div>
+        <div class="col-lg-4">
+            <div class="card card-outline card-info">
+                <div class="card-header">
+                    <h5 class="m-0 h6 font-weight-bold">
+                        <i class="fas fa-info-circle mr-1"></i>操作手順
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ol class="pl-3 mb-0">
+                        <li>入庫／出庫の種別を選択</li>
+                        <li>種類を選択</li>
+                        <li>金額を選択</li>
+                        <li>数量、日付を入力(必須項目)</li>
+                        <li>使用先・用途、メモを入力</li>
+                        <li>登録ボタンを押す</li>
+                    </ol>
+                    <span class="small">※レターパックを使用する際は、メモに追跡番号を入力してください。</span>
+                </div>
+                <div class="card-footer">
+                    <div id="selected-summary" class="alert alert-info py-2 my-2" style="display:none"></div>
 
-                <button type="submit" class="btn btn-sm btn-block btn-primary">
-                    <i class="fas fa-save mr-1"></i>登録</button>
-                <a href="{{ route('stamps.transactions.index') }}" class="btn btn-sm btn-block btn-default">
-                    <i class="fas fa-arrow-left mr-1"></i>戻る</a>
+                    <button type="submit" class="btn btn-sm btn-block btn-primary">
+                        <i class="fas fa-save mr-1"></i>登録</button>
+                    <a href="{{ route('stamps.transactions.index') }}" class="btn btn-sm btn-block btn-default">
+                        <i class="fas fa-arrow-left mr-1"></i>戻る</a>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</form>
+
 @stop
 
 @section('js')
