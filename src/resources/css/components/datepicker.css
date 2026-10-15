@@ -1,0 +1,167 @@
+@import "flatpickr/dist/flatpickr.min.css";
+
+/* ========================================
+   Flatpickr Custom Design
+   ======================================== */
+
+/* カレンダー全体 */
+.flatpickr-calendar {
+    width: 320px;
+    padding: 0;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    font-family: "Yu Gothic", "Meiryo", sans-serif;
+}
+
+.flatpickr-rContainer {
+    margin: 0 auto;
+}
+
+/* 月ヘッダー */
+.flatpickr-months {
+    padding-top: 6px;
+}
+
+/* 月年表示 */
+.flatpickr-current-month {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    padding-top: 4px;
+}
+
+/* 月セレクト */
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-weight: 500;
+}
+
+/* 年入力 */
+.numInputWrapper input {
+    font-weight: 500;
+}
+
+/* 前月・次月ボタン */
+.flatpickr-prev-month,
+.flatpickr-next-month {
+    top: 8px !important;
+    padding: 4px !important;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+/* hover */
+.flatpickr-prev-month:hover,
+.flatpickr-next-month:hover {
+    background: #f3f3f3;
+}
+
+/* 矢印 */
+.flatpickr-prev-month svg,
+.flatpickr-next-month svg {
+    width: 14px;
+    height: 14px;
+    fill: #666;
+}
+
+/* 曜日 */
+.flatpickr-weekdays {
+    margin-top: 6px;
+}
+
+.flatpickr-weekday {
+    color: #9b6b4d !important;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* 日付エリア */
+.flatpickr-days {
+    padding-bottom: 8px;
+}
+
+/* 各日付 */
+.flatpickr-day {
+    border: none !important;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+    margin: 2px auto;
+    color: #444;
+    font-size: 15px;
+    font-weight: 500;
+    transition: 0.15s;
+}
+
+/* hover */
+.flatpickr-day:hover {
+    background: #f3f7ff;
+    color: #2f80ed;
+}
+
+/* 今日 */
+.flatpickr-day.today {
+    border: 1.5px solid #5b9dff !important;
+    background: #5b9dff;
+    color: #fff;
+}
+
+/* 今日 hover */
+.flatpickr-day.today:hover {
+    background: #f3f7ff;
+    color: #5b9dff;
+}
+
+/* 選択日 */
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #5ea2ff !important;
+    border-color: #5ea2ff !important;
+    color: #fff !important;
+    box-shadow: none;
+}
+
+/* 前月・次月 */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #c9c9c9 !important;
+}
+
+/* 無効日 */
+.flatpickr-day.flatpickr-disabled {
+    color: #ddd !important;
+}
+
+/* 時間選択消す */
+.flatpickr-time {
+    display: none;
+}
+
+/* クリアボタン */
+.flatpickr-clear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /*height: 58px;
+    margin-top: 4px;*/
+    padding: 10px;
+
+    background: #57b36b;
+    color: #fff;
+
+    font-size: 18px;
+    font-weight: 500;
+
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+/* hover */
+.flatpickr-clear:hover {
+    background: #4ca861;
+}

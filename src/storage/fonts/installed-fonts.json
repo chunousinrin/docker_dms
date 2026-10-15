@@ -1,0 +1,20 @@
+{
+    "notosansjp": {
+        "normal": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_normal_a437c1359b313dc7f5480dfde8dd3f4f",
+        "bold": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_bold_e2079cfda2defb42a19da8a748dffaa2",
+        "100": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_100_27a46866fc8b1203f8d82ee66c0b65e5",
+        "300": "notosansjp_300_d08435d97cb3c6c18a19047aec9e567b"
+    },
+    "notosansjp_b": {
+        "bold": "notosansjp_b_bold_e2079cfda2defb42a19da8a748dffaa2",
+        "normal": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_b_normal_e2079cfda2defb42a19da8a748dffaa2"
+    },
+    "notosansjp_t": {
+        "300": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/notosansjp_t_300_27a46866fc8b1203f8d82ee66c0b65e5",
+        "normal": "notosansjp_t_normal_27a46866fc8b1203f8d82ee66c0b65e5"
+    },
+    "notosansjp_l": {
+        "100": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/notosansjp_l_100_d08435d97cb3c6c18a19047aec9e567b",
+        "normal": "notosansjp_l_normal_d08435d97cb3c6c18a19047aec9e567b"
+    }
+}

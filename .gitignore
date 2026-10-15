@@ -1,0 +1,11 @@
+# Laravel（src内）の除外設定
+/src/vendor/
+/src/node_modules/
+/src/.env
+/src/storage/*.key
+/src/public/storage
+/src/public/hot
+
+# Docker関連で除外するもの（必要に応じて）
+# 例: MySQLのデータ保存先を docker/mysql/data にしている場合など
+/docker/mysql/data/

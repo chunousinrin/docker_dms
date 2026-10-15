@@ -1,0 +1,75 @@
+#calendar {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 10px;
+}
+
+.calendar-container {
+    padding: 0 !important;
+}
+
+.fc-toolbar,
+.fc-toolbar.fc-header-toolbar {
+    padding: 0 !important;
+    margin-bottom: 0.5em !important;
+}
+
+/* サイドバーのコンテナ設定 */
+.sidebar-calendar-container {
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: sans-serif;
+}
+
+/* 1. ヘッダー（タイトル・ボタン）の調整 */
+.fc .fc-toolbar {
+    display: flex !important;
+    flex-direction: row !important;
+    /* 縦積みを禁止 */
+    justify-content: space-between;
+    /* 両端と中央に配置 */
+    align-items: center;
+    padding: 0 5px;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    /* タイトルを小さく */
+    font-weight: bold;
+}
+
+.fc .fc-button {
+    padding: 4px 8px !important;
+    /* ボタンを小さく */
+    font-size: 0.85rem !important;
+}
+
+/* 2. カレンダー内部（日付・曜日）の調整 */
+.fc .fc-col-header-cell-cushion {
+    font-size: 0.8rem;
+    /* 曜日の文字サイズ */
+    padding: 4px 0 !important;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 0.85rem !important;
+    /* 日付の数字 */
+    padding: 2px 5px !important;
+}
+
+/* 3. イベント（予定）の見た目 */
+.fc-event {
+    font-size: 0.75rem !important;
+    cursor: pointer;
+}
+
+/* 4. 高さの自動調整（スクロールバーを出さない） */
+.fc .fc-view-harness {
+    background-color: #fff;
+}
+
+/* ツールチップやポップオーバーがはみ出さないように調整 */
+.fc-popover {
+    width: 90% !important;
+    max-width: 380px !important;
+}

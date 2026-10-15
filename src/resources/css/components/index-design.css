@@ -1,0 +1,93 @@
+:root {
+    --main-color: #2d5a27;
+    --accent-light: #f8faf8;
+}
+
+body {
+    background-color: #f4f7f6 !important;
+}
+
+.content-header {
+    padding: 0.5rem !important;
+}
+
+/* --------------------------------------------------------------------
+　　検索パネル 
+ --------------------------------------------------------------------*/
+.search-card {
+    border: 1px solid #e0e0e0;
+    border-top: 3px solid var(--main-color);
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.field-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 3px;
+    display: block;
+}
+
+.form-control-sm:focus {
+    border-color: var(--main-color);
+    box-shadow: none;
+}
+
+.btn-main {
+    background: var(--main-color);
+    color: #fff !important;
+    border: none;
+    /*padding: 0.4rem 1rem;
+    font-weight: bold;*/
+}
+
+.btn-main:hover {
+    background: #23461e;
+}
+
+.btn-reset {
+    color: #888;
+    /*font-size: 0.85rem;*/
+    text-decoration: none;
+}
+
+/* --------------------------------------------------------------------
+　　一覧テーブル 
+ --------------------------------------------------------------------*/
+
+.table-responsive-custom {
+    overflow-x: auto;
+    background: #fff;
+}
+
+.table-custom {
+    width: 100%;
+    /*font-size: 0.85rem;*/
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-custom th {
+    background: var(--accent-light);
+    color: var(--main-color);
+    font-weight: 700;
+    padding: 12px 10px;
+    border-bottom: 2px solid var(--main-color);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table-custom td {
+    padding: 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+}
+
+.table-custom tbody tr:hover {
+    background-color: #f0f7f0 !important;
+}

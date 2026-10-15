@@ -1,0 +1,13 @@
+/* ① まず import を全部上にまとめる */
+/* app.css */
+@import "admin-lte/dist/css/adminlte.min.css";
+
+@import "./components/datepicker.css";
+@import "./components/fancybox.css";
+
+@import "./components/index-design.css";
+@import "./custom.css";
+/* ② その後 Tailwind（または他のCSS）
+@tailwind base;
+@tailwind components;
+@tailwind utilities; */

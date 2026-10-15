@@ -1,0 +1,10 @@
+# Laravel Development Rules
+
+- **PHP Version**: PHP 8.5+ と最新の Laravel 標準に従うこと。
+- **Architecture**: 
+  - コントローラーは極力薄く保ち、ビジネスロジックは FormRequest、Serviceクラス、または Actionクラス に切り出すこと。
+  - データベース操作には、生SQLではなく Eloquent ORM やクエリビルダを使用すること。
+- **Validation**: バリデーションはインラインではなく、必ず `FormRequest` クラスを作成してそちらに記述すること。
+- **Coding Style**: 
+  - 厳格な型宣言 (`declare(strict_types=1);`) を使用する。
+  - 命名規則（コントローラーは `*Controller`、モデルは単数形など）を厳守する。
