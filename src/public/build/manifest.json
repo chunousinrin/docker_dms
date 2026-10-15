@@ -1,0 +1,66 @@
+{
+  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
+    "file": "assets/fa-brands-400-BK5CuonO.woff2",
+    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2"
+  },
+  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2": {
+    "file": "assets/fa-regular-400-WLfxSHV3.woff2",
+    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2"
+  },
+  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2": {
+    "file": "assets/fa-solid-900-Iz_TytpP.woff2",
+    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2"
+  },
+  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2": {
+    "file": "assets/fa-v4compatibility-CMhGCN2W.woff2",
+    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-v4compatibility.woff2"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-BQlxzxB1.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/css/components/fullcalendar.css": {
+    "file": "assets/fullcalendar-BHOP-AbV.css",
+    "src": "resources/css/components/fullcalendar.css",
+    "isEntry": true,
+    "name": "fullcalendar",
+    "names": [
+      "fullcalendar.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-C7fMiE2C.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "css": [
+      "assets/app-4lRuKOky.css"
+    ],
+    "assets": [
+      "assets/fa-brands-400-BK5CuonO.woff2",
+      "assets/fa-regular-400-WLfxSHV3.woff2",
+      "assets/fa-solid-900-Iz_TytpP.woff2",
+      "assets/fa-v4compatibility-CMhGCN2W.woff2"
+    ]
+  },
+  "resources/js/components/fullcalendar.js": {
+    "file": "assets/fullcalendar-DorClZwM.js",
+    "name": "fullcalendar",
+    "src": "resources/js/components/fullcalendar.js",
+    "isEntry": true,
+    "css": [
+      "assets/fullcalendar-BHOP-AbV.css"
+    ]
+  },
+  "resources/js/partials/projects.js": {
+    "file": "assets/projects-CJBnC9nV.js",
+    "name": "projects",
+    "src": "resources/js/partials/projects.js",
+    "isEntry": true
+  }
+}
