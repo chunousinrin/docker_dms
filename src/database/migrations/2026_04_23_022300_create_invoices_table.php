@@ -19,11 +19,12 @@ return new class extends Migration
             $table->foreignId('requester_id'); // 発行者(支所)
             $table->string('invoice_number')->unique();
             $table->foreignId('project_id')->nullable();
+            $table->foreignId('estimate_id')->nullable()->constrained()->nullOnDelete(); // 元の見積（見積削除時はNULL）
             $table->string('project_name')->nullable();
             $table->string('customer_name');
             $table->string('honorific')->default('様');
-            $table->decimal('tax_amount', 20, 2)->default(0); // 消費税額
-            $table->decimal('total_billing', 20, 2)->default(0); // 税込合計
+            $table->decimal('tax_amount', 20, 2)->default(0);     // 消費税額
+            $table->decimal('total_billing', 20, 2)->default(0);  // 税込合計
             $table->string('project_location')->nullable();
             $table->date('due_date')->nullable();
             $table->date('payment_date')->nullable();
@@ -38,9 +39,7 @@ return new class extends Migration
             $table->date('completion_start_date')->nullable();
             $table->date('completion_end_date')->nullable();
             $table->timestamps();
-            $table->softDeletes();                       // deleted_at
-            $table->foreignId('estimate_id')->nullable()->constrained();
-            $table->unsignedBigInteger('estimate_id')->nullable()->after('project_id')->index();
+            $table->softDeletes(); // deleted_at
         });
     }
 

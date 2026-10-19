@@ -80,7 +80,15 @@ class InvoiceController extends Controller
 
         // 選択肢用：必要な列だけ取得（users の全列＝パスワードハッシュ等を読み込まない）
         $categories = Classification::select('id', 'name')->get();
-        $creators   = DB::table('users')->select('id', 'name')->get();
+        $creators = DB::table('users')
+            ->where(function ($q) use ($request) {
+                $q->where('used', 1);
+                if ($request->filled('creator_id')) {
+                    $q->orWhere('id', $request->creator_id);
+                }
+            })
+            ->select('id', 'name')
+            ->get();
 
         return view('invoices.index', compact('invoices', 'categories', 'creators'));
     }
