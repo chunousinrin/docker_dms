@@ -15,6 +15,25 @@
 <div class="container-fluid">
     <form id="invoice-form" action="{{ route('invoices.store') }}" method="POST">
         @csrf
+        @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @isset($estimate)
+        <input type="hidden" name="estimate_id" value="{{ $estimate->id }}">
+
+        @if(isset($existingInvoices) && $existingInvoices->isNotEmpty())
+        <div class="alert alert-warning">
+            この見積からは、すでに請求書が作成されています（請求番号：{{ $existingInvoices->implode('、') }}）。
+            二重請求にならないかご確認ください。
+        </div>
+        @endif
+        @endisset
+        @endif
         <div class="row">
             {{-- 左カラム：基本情報・顧客情報 --}}
             <div class="col-md-8">
@@ -118,7 +137,7 @@
                             </thead>
                             <tbody id="sortable-items">
                                 @php
-                                $items = collect( old( 'items', $estimate->items ?? [] ) );
+                                $items = collect( old( 'items', $estimate->items ?? [] ) )->values();
                                 @endphp
 
                                 @for($i = 0; $i < 15; $i++)
@@ -132,12 +151,12 @@
                                         <i class="fas fa-bars"></i>
                                     </td>
                                     <td class="text-center align-middle row-number p-0">{{ $i+1 }}</td>
-                                    <td><input type="text" name="items[{{ $i }}][description]" value="{{ $item->description ?? '' }}" class="form-control form-control-sm item-name"></td>
-                                    <td><input type="number" step="0.01" name="items[{{$i}}][quantity]" value="{{ $item->quantity ?? '' }}" class="form-control form-control-sm item-qty text-right quantity"></td>
-                                    <td><input type="text" name="items[{{$i}}][unit]" value="{{ $item->unit ?? '' }}" class="form-control form-control-sm unit"></td>
-                                    <td><input type="number" step="0.01" name="items[{{$i}}][unit_price]" value="{{ $item->unit_price ?? '' }}" class="form-control form-control-sm item-price unit-price text-right"></td>
+                                    <td><input type="text" name="items[{{ $i }}][description]" value="{{ data_get($item, 'description') }}" class="form-control form-control-sm item-name"></td>
+                                    <td><input type="number" step="0.01" name="items[{{$i}}][quantity]" value="{{ data_get($item, 'quantity') }}" class="form-control form-control-sm item-qty text-right quantity"></td>
+                                    <td><input type="text" name="items[{{$i}}][unit]" value="{{ data_get($item, 'unit') }}" class="form-control form-control-sm unit"></td>
+                                    <td><input type="number" step="0.01" name="items[{{$i}}][unit_price]" value="{{ data_get($item, 'unit_price') }}" class="form-control form-control-sm item-price unit-price text-right"></td>
                                     <td><input type="text" class="form-control form-control-sm item-subtotal text-right" readonly tabindex="-1"></td>
-                                    <input type="hidden" name="items[{{$i}}][order_number]" class="item-order" value="{{$i}}">
+                                    <input type="hidden" name="items[{{$i}}][order_number]" class="item-order" value="{{ $i + 1 }}">
                                     </tr>
                                     @endfor
                             </tbody>
@@ -162,7 +181,6 @@
                                 <div class="form-control bg-light">
                                     {{ Auth::user()->name }}
                                 </div>
-                                <input type="hidden" name="creator_id" value="{{ Auth::id() }}">
                                 <div class="input-group-append">
                                     <div class="input-group-text">
                                         <input type="hidden" name="show_creator" value="0">
@@ -231,7 +249,7 @@
                     <div class="form-group">
                         <label class="font-weight-bold text-dark mb-1 small">社内メモ (Memo)</label>
                         <textarea name="memo" class="form-control" rows="2"
-                            placeholder="社内管理用（印字されません）">@isset($estimate->estimate_number)見積番号：{!! ($estimate->estimate_number) !!}@endisset</textarea>
+                            placeholder="社内管理用（印字されません）">@isset($estimate->estimate_number)見積番号：{{ $estimate->estimate_number }}@endisset</textarea>
                     </div>
 
                     <div class="bg-light p-3 rounded">
@@ -268,44 +286,41 @@
     document.addEventListener('DOMContentLoaded', function() {
 
         // --- 3. 計算ロジック ---
+        // 浮動小数点の微小誤差を除く
+        const fix = (x, d) => Number(x.toFixed(d));
+
         window.calculate = function() {
             let subtotal = 0;
 
             $('#items-table tbody tr').each(function() {
                 const qty = parseFloat($(this).find('.item-qty').val()) || 0;
                 const price = parseFloat($(this).find('.item-price').val()) || 0;
-                const lineTotal = qty * price;
+                const lineTotal = qty * price; // 行ごとの丸めはしない
 
                 $(this).find('.item-subtotal').val(lineTotal.toLocaleString());
                 subtotal += lineTotal;
             });
-
-            $('#calc-subtotal').text('¥' + subtotal.toLocaleString());
+            subtotal = fix(subtotal, 4);
 
             const taxOption = $('#tax_type_id option:selected');
-            const rate = parseFloat(taxOption.data('rate')) || 0;
+            const rate = parseFloat(taxOption.data('rate')) || 0; // 0.1 = 10%
             const type = taxOption.data('type');
 
             let tax = 0;
-            let total = subtotal;
+            let total = Math.floor(subtotal);
 
             if (type === 'exclusive') {
-                tax = Math.floor(subtotal * (rate / 100)); // 税金を切り捨て
-                total = subtotal + tax;
+                total = Math.floor(fix(subtotal * (1 + rate), 6));
+                tax = Math.floor(fix(subtotal * rate, 6));
             } else if (type === 'inclusive') {
-                // 内税の場合： subtotal自体が税込なのでそのまま使用（計算が必要な場合はここで丸める）
-                const netAmount = Math.ceil(subtotal / (1 + (rate / 100)));
-                tax = subtotal - netAmount;
-                total = subtotal;
+                tax = Math.floor(fix(total * rate / (1 + rate), 6));
             }
 
-            // 【修正ポイント】表示前に合計値を確実に整数（切り捨て）にする
-            total = Math.floor(total);
-
-            // 結果を反映
+            // 小計の表示は PDF の「税抜 = 合計 − 税額」と揃える
+            $('#calc-subtotal').text('¥' + (type === 'exclusive' ? total - tax : total).toLocaleString());
             $('#calc-tax').text('¥' + tax.toLocaleString());
             $('#calc-total').text('¥' + total.toLocaleString());
-        }
+        };
 
         // --- 4. 行番号と順序の更新 ---
         window.updateRowNumbers = function() {
@@ -337,57 +352,60 @@
 
         async function previewPdf() {
             if (previewLoading) return;
-
             previewLoading = true;
 
-            // ボタンをローディング表示に（ユーザーへの親切設計）
             const $btn = $('#preview-btn');
             const originalHtml = $btn.html();
             $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i> 生成中...').prop('disabled', true);
 
-            // フォーム要素の取得（Blade内のID 'invoice-form' に合わせています）
             const form = document.getElementById('invoice-form');
             const formData = new FormData(form);
 
             try {
-                // FetchでLaravel側にPOST送信（ルートは元の 'invoices.preview' に合わせています）
                 const response = await fetch("{{ route('invoices.preview') }}", {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        // LaravelのCSRFトークンをヘッダーにも付与（FormDataに入っていれば基本不要ですが念のため）
+                        'Accept': 'application/json', // 検証エラーを302ではなく422で受け取る
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     }
                 });
 
+                const contentType = response.headers.get('content-type') || '';
+
+                // 入力検証エラー
+                if (response.status === 422) {
+                    const json = await response.json();
+                    throw new Error(Object.values(json.errors).flat().join('\n'));
+                }
+                // サーバーエラー
                 if (!response.ok) {
-                    throw new Error('PDF生成に失敗しました');
+                    const j = await response.clone().json().catch(() => null);
+                    console.error('preview error', response.status, j);
+                    throw new Error(j?.message ? j.message : 'サーバーエラー (' + response.status + ')');
+                }
+                // PDF以外が返った場合
+                if (response.redirected || !contentType.includes('application/pdf')) {
+                    throw new Error('PDF以外のレスポンスが返りました (' + contentType + ')');
                 }
 
-                // バイナリデータをBlob化
+                // PDFをBlob化し、ブラウザ内だけで有効な一時URLを発行
                 const blob = await response.blob();
-
-                // ブラウザ内だけで有効な一時URLを発行
                 const pdfUrl = URL.createObjectURL(blob);
 
-                // Fancyboxで表示
                 Fancybox.show([{
                     src: pdfUrl,
-                    type: 'pdf' // PDFとして明示（中身がPDFオブジェクトとして最適化されます）
+                    type: 'pdf'
                 }], {
-                    // モーダルが閉じられたら、生成した一時URLを解放してメモリを節約
                     on: {
-                        destroy: () => {
-                            URL.revokeObjectURL(pdfUrl);
-                        }
+                        destroy: () => URL.revokeObjectURL(pdfUrl) // 閉じたら一時URLを解放
                     }
                 });
 
             } catch (e) {
                 console.error(e);
-                alert('PDFプレビューの生成に失敗しました。入力内容を確認してください。');
+                alert(e.message || 'PDFプレビューの生成に失敗しました。入力内容を確認してください。');
             } finally {
-                // ステータスとボタンを元に戻す
                 previewLoading = false;
                 $btn.html(originalHtml).prop('disabled', false);
             }

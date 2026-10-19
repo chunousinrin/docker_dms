@@ -235,23 +235,55 @@
 
             // ★ Fancyboxでフォーム送信結果のPDFを表示するロジックを追加
             $('#preview-btn').on('click', function(e) {
-                e.preventDefault();
+                let previewLoading = false;
 
-                // フォームのデータをシリアライズ（URLパラメータ化）
-                let formData = $('#transmittal-form').serialize();
-                let actionUrl = $('#transmittal-form').attr('action');
+                async function previewPdf() {
+                    if (previewLoading) return;
+                    previewLoading = true;
 
-                // GETパラメータ形式にしてFancyboxのURLに指定
-                let pdfUrl = actionUrl + '?' + formData;
+                    const $btn = $('#preview-btn');
+                    const originalHtml = $btn.html();
+                    $btn.html('<i class="fas fa-spinner fa-spin mr-1"></i> 生成中...').prop('disabled', true);
 
-                // Fancyboxを起動してPDFを表示
-                Fancybox.show([{
-                    src: pdfUrl,
-                    type: 'iframe',
-                    preload: false
-                }], {
-                    // オプション（必要に応じて）
-                    animated: true,
+                    try {
+                        const form = document.getElementById('transmittal-form');
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: new FormData(form), // @csrf の _token も含まれる
+                            headers: {
+                                'Accept': 'application/json'
+                            } // 検証エラー時に302ではなく422を返させる
+                        });
+
+                        if (!response.ok) throw new Error('PDF生成に失敗しました');
+
+                        const pdfUrl = URL.createObjectURL(await response.blob());
+                        Fancybox.show([{
+                            src: pdfUrl,
+                            type: 'pdf'
+                        }], {
+                            on: {
+                                destroy: () => URL.revokeObjectURL(pdfUrl)
+                            }
+                        });
+                    } catch (e) {
+                        console.error(e);
+                        alert('PDFプレビューの生成に失敗しました。入力内容を確認してください。');
+                    } finally {
+                        previewLoading = false;
+                        $btn.html(originalHtml).prop('disabled', false);
+                    }
+                }
+
+                $('#preview-btn').on('click', function(e) {
+                    e.preventDefault();
+                    previewPdf();
+                });
+
+                // Enterキーでの通常送信（ページ遷移）を防ぎ、プレビューに振り向ける
+                $('#transmittal-form').on('submit', function(e) {
+                    e.preventDefault();
+                    previewPdf();
                 });
             });
         });

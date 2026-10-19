@@ -137,7 +137,7 @@
                     <tr>
                         <td style="text-align: left;">{{ $item['name'] }}</td>
                         <td style="padding:0 2em;">・・・</td>
-                        <td class="text-right">{{ $item['qty'] }}{{ $item['unit'] }}</td>
+                        <td class="text-right">{{ $item['qty'] ?? '' }}{{ $item['unit'] ?? '' }}</td>
                     </tr>
                     @endforeach
                 </tbody>

@@ -9,7 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-
+use App\Http\Requests\Accounting\InvoiceRequest;
 use App\Models\Master\User;
 use App\Models\Accounting\{Invoice, InvoiceItem, TaxType, Estimate};
 use App\Models\Master\{Classification, Branch, Bank};
@@ -20,11 +20,13 @@ class InvoiceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Invoice::query()->with(['taxType', 'classification']); // 必要に応じてリレーション追加
+        // 一覧で使うのは作成者名だけ（taxType / classification は未使用だった）
+        $query = Invoice::query()->with('creator:id,name');
 
         // ① キーワード検索（請求番号・顧客名・事業名）
         if ($request->filled('keyword')) {
-            $keyword = $request->keyword;
+            // LIKE のワイルドカード（% _ \）を文字として扱う
+            $keyword = addcslashes($request->keyword, '%_\\');
             $query->where(function ($q) use ($keyword) {
                 $q->where('invoice_number', 'like', "%{$keyword}%")
                     ->orWhere('customer_name', 'like', "%{$keyword}%")
@@ -66,203 +68,116 @@ class InvoiceController extends Controller
                     ->orWhere('payment_date', '0000-00-00');
             });
         }
+        if ($request->input('trashed') === '1') {
+            $query->onlyTrashed();
+        }
 
-        $invoices = $query->orderBy('billing_date', 'desc')->paginate(20);
+        $invoices = $query
+            ->orderByDesc('billing_date')
+            ->orderByDesc('id')      // 同じ発行日の並びを固定（ページ間で重複・欠落しないように）
+            ->paginate(20)
+            ->withQueryString();     // ページ送りで検索条件を引き継ぐ
 
-        // 選択肢用のデータ
-        $categories = Classification::all();
-        $creators = DB::table('users')->get(); // 作成者（ユーザー）
+        // 選択肢用：必要な列だけ取得（users の全列＝パスワードハッシュ等を読み込まない）
+        $categories = Classification::select('id', 'name')->get();
+        $creators   = DB::table('users')->select('id', 'name')->get();
 
         return view('invoices.index', compact('invoices', 'categories', 'creators'));
-    }
-
-    /**
-     * 新規作成画面
-     */
-    public function create()
-    {
-        // branches テーブルから全件取得
-        $branches = \DB::table('branches')->orderBy('id', 'asc')->get();
-        // 1. 採番ルール: "12" + タイムスタンプ
-        $suggestedNumber = '12' . time();
-        // 2. 税率マスタを取得
-        $taxTypes = TaxType::where('active', 1)->get();
-        // 3. 【重要】事業分類を取得 (invoice_categoriesテーブルがある想定)
-        $categories = \DB::table('classifications')->get();
-        // 4. 【重要】作成者（ユーザー）を取得
-        $creators = User::all();
-        // 5. 【追加】銀行口座一覧を取得
-        $banks = \DB::table('banks')->orderBy('id', 'asc')->get();
-
-        // 全ての変数を view に渡す
-        return view('invoices.create', compact(
-            'suggestedNumber',
-            'taxTypes',
-            'categories',
-            'creators',
-            'branches',
-            'banks'
-        ));
     }
     /**
      * 保存処理
      */
-    public function store(Request $request)
+
+    public function store(InvoiceRequest $request)
     {
-        // バリデーション（必要に応じて項目を追加してください）
-        $validated = $request->validate([
-            'invoice_number' => 'required|unique:invoices,invoice_number',
-            'tax_type_id' => 'required|exists:tax_types,id',
-            'items.*.description' => 'nullable|string',
-            'items.*.quantity' => 'nullable|numeric',
-            'items.*.unit_price' => 'nullable|numeric',
-        ]);
+        $data  = $request->validated();
+        $items = $data['items'];
+        unset($data['items']);
 
-        DB::transaction(function () use ($request) {
-            // 1. 親レコードの作成（一旦、金額は0で作成）
-            $invoice = Invoice::create($request->all());
+        DB::transaction(function () use ($data, $items) {
+            // creator_id はサーバー側で確定。金額は calculateAmounts() が算出
+            $invoice = Invoice::create($data + ['creator_id' => Auth::id()]);
 
-            // 2. 明細の保存（入力がある行のみ）
-            $itemsData = $request->input('items', []);
-            foreach ($itemsData as $index => $item) {
-                // 品名、数量、単価のいずれかが入力されている場合のみ保存
-                if (!empty($item['description']) || !empty($item['quantity']) || !empty($item['unit_price'])) {
-                    $invoice->items()->create([
-                        'description' => $item['description'],
-                        'quantity'    => $item['quantity'] ?? 0,
-                        'unit'        => $item['unit'],
-                        'unit_price'  => $item['unit_price'] ?? 0,
-                        'order_number' => $index, // 1からの連番
-                    ]);
+            foreach ($items as $index => $item) {
+                if (blank($item['description'] ?? null) && blank($item['quantity'] ?? null) && blank($item['unit_price'] ?? null)) {
+                    continue;
                 }
+                $invoice->items()->create([
+                    'description'  => $item['description'] ?? null,
+                    'quantity'     => $item['quantity'] ?? 0,
+                    'unit'         => $item['unit'] ?? null,
+                    'unit_price'   => $item['unit_price'] ?? 0,
+                    'order_number' => $item['order_number'] ?? ($index + 1),
+                ]);
             }
 
-            // 3. 金額の再計算と更新
-            // 先ほどModelに定義した calculateAmounts() を呼び出す
-            $invoice->load('taxType', 'items'); // 最新の状態をロード
+            $invoice->load('taxType', 'items');
             $invoice->calculateAmounts();
             $invoice->save();
         });
 
         return redirect()->route('invoices.index')->with('success', '請求書を作成しました。');
     }
+
     public function destroy(Invoice $invoice)
     {
         try {
-            // 1. 紐付いている明細行を先に削除
-            $invoice->items()->delete();
-
-            // 2. 請求書本体を削除
-            $invoice->delete();
+            $invoice->delete(); // 論理削除（明細は残す）
 
             return redirect()->route('invoices.index')
                 ->with('success', '請求書（' . $invoice->invoice_number . '）を削除しました。');
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', '削除中にエラーが発生しました。');
+        } catch (\Throwable $e) {
+            report($e);
+            return redirect()->back()->with('error', '削除中にエラーが発生しました。');
         }
     }
 
-    public function preview(Request $request)
+    public function restore(Invoice $invoice)   // ルート側で withTrashed() が必要
     {
-        // 1. 基本データのセット
-        $invoice = new Invoice($request->all());
+        $invoice->restore();
+        //$invoice->forceFill(['deleted_by' => null])->save();
 
-        // 2. 支所データ（発行者）を取得
-        $branch = Branch::find($request->requester_id);
+        return redirect()->route('invoices.index')
+            ->with('success', '請求書（' . $invoice->invoice_number . '）を復元しました。');
+    }
 
-        // 3. リレーション先の手動セット
-        $invoice->taxType = TaxType::find($request->tax_type_id);
-        $invoice->classification = Classification::find($request->invoice_category_id);
+    public function preview(InvoiceRequest $request)
+    {
+        $data      = $request->validated();
+        $itemsData = $data['items'];
+        unset($data['items']);
 
-        // 4. 明細行の作成
-        $items = collect();
-        foreach ($request->items as $itemData) {
+        // 未保存の請求書（creator_id はサーバー側で確定）
+        $invoice = new Invoice($data + ['creator_id' => Auth::id()]);
+        $invoice->setRelation('creator', $request->user());   // 保存前なので追加の問い合わせは不要
+
+        // 明細行（未保存）。内容のない行は項番だけ持たせる
+        $items = collect($itemsData)->map(function ($row) {
             $hasContent = !empty(array_filter([
-                $itemData['description'] ?? null,
-                $itemData['quantity'] ?? null,
-                $itemData['unit_price'] ?? null,
-                $itemData['unit'] ?? null,
+                $row['description'] ?? null,
+                $row['quantity'] ?? null,
+                $row['unit_price'] ?? null,
+                $row['unit'] ?? null,
             ]));
 
-            if ($hasContent) {
-                $items->push(new InvoiceItem($itemData));
-            } else {
-                $items->push(new InvoiceItem(['order_number' => $itemData['order_number'] ?? null]));
-            }
-        }
+            return new InvoiceItem($hasContent ? $row : ['order_number' => $row['order_number'] ?? null]);
+        });
+        $invoice->setRelation('items', $items->values());
 
-        $invoice->setRelation('items', $items);
-
-        // 5. 金額計算
+        // 金額計算（税率設定が必要）
+        $invoice->load('taxType');
         $invoice->calculateAmounts();
 
-        // 6. 印影データの取得（BranchモデルのBLOBデータから取得）
-        $stampBase64 = null;
-        if ($branch && $branch->seal_path) {
-            // DBから取得したバイナリデータをBase64エンコード
-            $stampBase64 = base64_encode($branch->seal_path);
-        }
-        $logoPath = storage_path('app/public/jforest.svg');
-        $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
-
-        // 7. PDF生成
-        $pdf = Pdf::loadView('invoices.pdf', [
-            'invoice' => $invoice,
-            'displayItems' => $invoice->getItemsForDisplay(),
-            'requester' => $branch, // 取得済みの$branchを渡す
-            'banks' => [
-                Bank::find($request->bank_id1),
-                Bank::find($request->bank_id2),
-                Bank::find($request->bank_id3),
-            ],
-            'creator' => User::find($request->creator_id),
-            'stampBase64' => $stampBase64,
-            'logoBase64' => $logoBase64,
-        ]);
-
-        return $pdf->stream('preview.pdf');
+        return $this->buildInvoicePdf($invoice)->stream('preview.pdf');
     }
+
     public function downloadPdf(Invoice $invoice)
     {
-        // 1. リレーションをロード（order_number順に並べるように強制）
-        $invoice->load(['items' => function ($query) {
-            $query->orderBy('order_number', 'asc');
-        }]);
+        $invoice->load(['items' => fn($query) => $query->orderBy('order_number')]);
 
-        $branch = Branch::find($invoice->requester_id);
-
-        // 3. リレーション先の手動セット
-        $invoice->taxType = TaxType::find($invoice->tax_type_id);
-        $invoice->classification = Classification::find($invoice->invoice_category_id);
-
-        $stampBase64 = null;
-        if ($branch && $branch->seal_path) {
-            $stampBase64 = base64_encode($branch->seal_path);
-        }
-        $logoPath = storage_path('app/public/jforest.svg');
-        $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
-
-        // 2. 重要：getItemsForDisplay() の結果を別の変数（$displayItems）に入れる
-        $displayItems = $invoice->getItemsForDisplay();
-
-        // 3. PDF生成
-        $pdf = \Pdf::loadView('invoices.pdf', [
-            'invoice'      => $invoice,
-            'displayItems' => $displayItems, // ★ここを 'items' ではなく 'displayItems' にする
-            'requester'    => $branch,
-            'banks'        => [
-                Bank::find($invoice->bank_id1),
-                Bank::find($invoice->bank_id2),
-                Bank::find($invoice->bank_id3),
-            ],
-            'creator'      => User::find($invoice->creator_id),
-            'stampBase64'  => $stampBase64,
-            'logoBase64' => $logoBase64,
-        ]);
-
-        return $pdf->stream("invoice_{$invoice->invoice_number}.pdf");
+        return $this->buildInvoicePdf($invoice)->stream("invoice_{$invoice->invoice_number}.pdf");
     }
+
     public function edit(Invoice $invoice)
     {
         // リレーションをロード
@@ -291,18 +206,31 @@ class InvoiceController extends Controller
             ->with('flash_message', "請求番号: {$invoice->invoice_number} の情報を更新しました。");
     }
 
+    /** 請求書作成画面の選択肢（create / createFromEstimate 共通） */
+    private function formOptions(): array
+    {
+        return [
+            'suggestedNumber' => '12' . time(),
+            'taxTypes'        => TaxType::where('active', 1)->get(),
+            'categories'      => DB::table('classifications')->get(),
+            'branches'        => DB::table('branches')->orderBy('id')->get(),
+            'banks'           => DB::table('banks')->orderBy('id')->get(),
+        ];
+    }
+
+    public function create()
+    {
+        return view('invoices.create', $this->formOptions());
+    }
+
     public function createFromEstimate(Estimate $estimate)
     {
         $estimate->load('items');
-        $suggestedNumber = '12' . time();
 
-        return view('invoices.create', [
-            'estimate'        => $estimate,
-            'suggestedNumber' => $suggestedNumber,
-            'categories'      => Classification::all(),
-            'branches'        => Branch::all(),
-            'taxTypes'        => TaxType::all(),
-            'banks'           => Bank::all(),
+        return view('invoices.create', $this->formOptions() + [
+            'estimate'         => $estimate,
+            // 同じ見積から作成済みの請求書（二重請求の注意喚起用。削除済みは含まれない）
+            'existingInvoices' => Invoice::where('estimate_id', $estimate->id)->pluck('invoice_number'),
         ]);
     }
 
@@ -319,22 +247,66 @@ class InvoiceController extends Controller
     // ② PDFの生成・出力（DB保存はしない）
     public function generateTransmittalPdf(Request $request)
     {
+        $v = $request->validate([
+            'date'                => 'nullable|date_format:Y-m-d',
+            'customer_name'       => 'required|string|max:100',
+            'honorific'           => 'nullable|string|max:10',
+            'show_staff'          => 'nullable|in:0,1',
+            'title'               => 'nullable|string|max:100',
+            'greeting'            => 'nullable|string|max:50',
+            'body'                => 'nullable|string|max:5000',
+            'attachments'         => 'nullable|array|max:30',
+            'attachments.*.name'  => 'nullable|string|max:100',
+            'attachments.*.qty'   => 'nullable|numeric|min:0|max:9999',
+            'attachments.*.unit'  => 'nullable|string|max:10',
+        ]);
+
         $data = [
-            'date'          => $request->input('date'),
-            'customer_name' => $request->input('customer_name'),
-            'honorific'     => $request->input('honorific', '様'),
-
-            // ★ 修正：届いた値が '1'（チェックあり）なら true、それ以外（'0'など）なら false
-            'show_staff'    => $request->input('show_staff') === '1',
-
+            'date'          => $v['date'] ?? date('Y-m-d'),
+            'customer_name' => $v['customer_name'],
+            'honorific'     => $v['honorific'] ?? '様',
+            'show_staff'    => ($v['show_staff'] ?? '0') === '1',
             'staff_name'    => Auth::user()->name,
-            'title'         => $request->input('title', '書類送付のご案内'),
-            'body'          => $request->input('body'),
-            'attachments'   => $request->input('attachments', []),
-            'greeting'      => $request->input('greeting', ''),
+            'title'         => $v['title'] ?? '書類送付のご案内',
+            'body'          => $v['body'] ?? '',
+            'attachments'   => $v['attachments'] ?? [],
+            'greeting'      => $v['greeting'] ?? '',
         ];
 
-        $pdf = Pdf::loadView('invoices.transmittal_pdf', $data);
-        return $pdf->stream('送付案内書_' . date('Ymd') . '.pdf');
+        return Pdf::loadView('invoices.transmittal_pdf', $data)
+            ->stream('送付案内書_' . date('Ymd') . '.pdf');
+    }
+
+    /**
+     * 請求書PDFを組み立てる（preview / downloadPdf 共通）
+     * $invoice は保存済みでも未保存でも可。items リレーションは呼び出し側でセット済みであること。
+     */
+    private function buildInvoicePdf(Invoice $invoice)
+    {
+        // 未ロードのものだけ取得（未保存のモデルでも外部キーから引ける）
+        $invoice->loadMissing(['branch', 'creator', 'taxType']);
+
+        $branch = $invoice->branch;   // 発行者（requester_id）
+
+        // 印影（BranchのBLOBをBase64化）
+        $stampBase64 = ($branch && $branch->seal_path) ? base64_encode($branch->seal_path) : null;
+
+        // ロゴ
+        $logoPath   = storage_path('app/public/jforest.svg');
+        $logoBase64 = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : null;
+
+        return Pdf::loadView('invoices.pdf', [
+            'invoice'      => $invoice,
+            'displayItems' => $invoice->items,     // ビュー側が項番で探し、無い行は空欄にする
+            'requester'    => $branch,
+            'banks'        => [
+                Bank::find($invoice->bank_id1),
+                Bank::find($invoice->bank_id2),
+                Bank::find($invoice->bank_id3),
+            ],
+            'creator'      => $invoice->creator,
+            'stampBase64'  => $stampBase64,
+            'logoBase64'   => $logoBase64,
+        ]);
     }
 }

@@ -25,7 +25,7 @@
 
             {{-- ②〜⑤ セレクト・日付 --}}
             <div class="form-row">
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-2">
                     <label class="field-label">事業分類</label>
                     <select name="category_id" class="form-control form-control-sm">
                         <option value="">すべて</option>
@@ -84,6 +84,15 @@
                         </label>
                     </div>
                 </div>
+
+                <div class="form-group col-md-1 text-center">
+                    <label class="field-label" for="trashed">削除済みを表示</label>
+                    <div class="custom-control custom-checkbox pt-1">
+                        <input type="checkbox" class="custom-control-input" id="trashed" name="trashed" value="1"
+                            {{ request('trashed') === '1' ? 'checked' : '' }}>
+                        <label class="custom-control-label" for="trashed" style="cursor: pointer;"></label>
+                    </div>
+                </div>
             </div>
 
             {{-- アクションバー --}}
@@ -135,6 +144,15 @@
                             </span>
                         </td>
                         <td class="text-center" style="width: 0!important;white-space: nowrap;">
+
+                            @if($invoice->trashed())
+                            <form action="{{ route('invoices.restore', $invoice) }}" method="POST" class="m-0" style="display:inline;">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="btn btn-sm btn-light shadow-sm font-weight-bold" style="font-size:0.7rem">復元</button>
+                            </form>
+                            @else
+
                             {{-- 編集ボタン --}}
                             <a href="{{ route('invoices.edit', $invoice) }}" class="btn btn-sm shadow-sm btn-light" style="padding-left: 0.5em;padding-right:0.2em;">
                                 <i class="fas fa-edit" style="color:#343a40"></i>
@@ -146,8 +164,8 @@
                             </a>
 
                             {{-- 削除ボタン --}}
-                            <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="m-0" style="display: inline;"
-                                onsubmit="return confirm('請求番号: {{ $invoice->invoice_number }}\n削除してもよろしいですか?');">
+                            <form action="{{ route('invoices.destroy', $invoice) }}" method="POST" class="m-0 js-delete-form" style="display: inline;"
+                                data-invoice-number="{{ $invoice->invoice_number }}">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm shadow-sm btn-light px-2">
@@ -157,6 +175,8 @@
                             <a href="{{ route('invoices.transmittal', ['customer' => $invoice->customer_name, 'honorific' => $invoice->honorific]) }}"
                                 class="btn btn-sm shadow-sm btn-light font-weight-bold" title="送付文書作成">送
                             </a>
+
+                            @endif
                         </td>
                     </tr>
                     @empty
@@ -173,3 +193,14 @@
     </div>
 </div>
 @endsection
+@push('js')
+<script>
+    document.addEventListener('submit', function(e) {
+        const form = e.target.closest('.js-delete-form');
+        if (!form) return;
+        if (!confirm('請求番号: ' + form.dataset.invoiceNumber + '\n削除してもよろしいですか?')) {
+            e.preventDefault();
+        }
+    });
+</script>
+@endpush

@@ -5,6 +5,7 @@ namespace App\Models\Accounting;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Master\Classification;
 use App\Models\Accounting\TaxType;
 use App\Models\Accounting\InvoiceItem;
@@ -16,6 +17,8 @@ use App\Models\Master\User;
  */
 class Invoice extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'invoice_category_id',
         'creator_id',
@@ -40,7 +43,8 @@ class Invoice extends Model
         'bank_id2',
         'bank_id3',
         'completion_start_date',
-        'completion_end_date'
+        'completion_end_date',
+        'estimate_id'
     ];
 
     /**
@@ -49,6 +53,11 @@ class Invoice extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class)->orderBy('order_number');
+    }
+
+    public function estimate(): BelongsTo
+    {
+        return $this->belongsTo(Estimate::class);   // 同じ namespace（App\Models\Accounting）
     }
 
     /**
@@ -99,30 +108,30 @@ class Invoice extends Model
      * 税金および合計金額を計算してプロパティにセットする
      * (保存直前にコントローラーから呼び出す想定)
      */
-    public function calculateAmounts()
+    public function calculateAmounts(): void
     {
-        // 1. 小計を算出 (入力がある明細のみ)
-        $subtotal = $this->items->sum(function ($item) {
-            return $item->quantity * $item->unit_price;
-        });
+        // 明細の合計（行ごとの丸めなし）。浮動小数点の微小誤差を除くため小数4桁で丸める
+        $subtotal = round(
+            (float) $this->items->sum(fn($i) => (float) $i->quantity * (float) $i->unit_price),
+            4
+        );
+        $rate = (float) $this->taxType->rate;   // 小数表記（0.1 = 10%）
 
-        $taxRate = $this->taxType->rate / 100;
-        $taxType = $this->taxType->type;
+        switch ($this->taxType->type) {
+            case 'exclusive': // 外税：最終合計で切捨て
+                $this->total_billing = (int) floor(round($subtotal * (1 + $rate), 6));
+                $this->tax_amount    = (int) floor(round($subtotal * $rate, 6));
+                break;
 
-        if ($taxType === 'exclusive') {
-            // 外税：小計 × 税率 (切捨て)
-            $this->tax_amount = floor($subtotal * $taxRate);
-            $this->total_billing = $subtotal + $this->tax_amount;
-        } elseif ($taxType === 'inclusive') {
-            // 内税：小計 - (小計 / (1 + 税率)) (切捨て)
-            // ※税込合計から税抜額を引いて税額を出すパターン
-            $netAmount = ceil($subtotal / (1 + $taxRate));
-            $this->tax_amount = $subtotal - $netAmount;
-            $this->total_billing = $subtotal;
-        } else {
-            // 税抜・非課税
-            $this->tax_amount = 0;
-            $this->total_billing = $subtotal;
+            case 'inclusive': // 内税：入力は税込。最終合計を切捨て、税額は内数
+                $total = (int) floor($subtotal);
+                $this->total_billing = $total;
+                $this->tax_amount    = (int) floor(round($total * $rate / (1 + $rate), 6));
+                break;
+
+            default:          // 税抜(none)など
+                $this->total_billing = (int) floor($subtotal);
+                $this->tax_amount    = 0;
         }
     }
 }

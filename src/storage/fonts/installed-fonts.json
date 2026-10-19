@@ -1,9 +1,9 @@
 {
     "notosansjp": {
-        "normal": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_normal_a437c1359b313dc7f5480dfde8dd3f4f",
-        "bold": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_bold_e2079cfda2defb42a19da8a748dffaa2",
+        "normal": "\/var\/www\/html\/storage\/fonts\/\/notosansjp_normal_b7bb188660a3bb4a95f4b63515416544",
+        "bold": "notosansjp_bold_dd9c6ab769e39dacc1b63d9408b7aa20",
         "100": "D:\\laragon-8\\laragon\\www\\dms\\storage\\fonts\/\/notosansjp_100_27a46866fc8b1203f8d82ee66c0b65e5",
-        "300": "notosansjp_300_d08435d97cb3c6c18a19047aec9e567b"
+        "300": "\/var\/www\/html\/storage\/fonts\/\/notosansjp_300_d08435d97cb3c6c18a19047aec9e567b"
     },
     "notosansjp_b": {
         "bold": "notosansjp_b_bold_e2079cfda2defb42a19da8a748dffaa2",

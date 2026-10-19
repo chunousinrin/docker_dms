@@ -248,6 +248,14 @@
                     </tr>
                     @endfor
             </tbody>
+            @php
+            $taxPercent = (int) round((float) $invoice->taxType->rate * 100); // 0.1 → 10
+            $taxable = match ($invoice->taxType->type) {
+            'exclusive' => $invoice->total_billing - $invoice->tax_amount, // 税抜の対象額
+            'inclusive' => $invoice->total_billing,
+            default => null,
+            };
+            @endphp
             <tfoot>
                 <tr>
                     <td colspan="2" rowspan="3" style="border:none;vertical-align:top;">
@@ -256,18 +264,8 @@
                     </td>
                     <th>10%対象</th>
                     <td style="text-align: right;padding-right: 0.5em!important;">
-                        @if($invoice->taxType->rate==10)
-                        @switch($invoice->taxType->type)
-                        @case('exclusive')
-                        {{ number_format($invoice['total_billing'] - $invoice['tax_amount']) }}
-                        @break
-                        @case('inclusive')
-                        {{ number_format($invoice['total_billing']) }}
-                        @break
-                        @case('none')
-                        {{-- 非表示 --}}
-                        @break
-                        @endswitch
+                        @if($taxPercent === 10 && $taxable !== null)
+                        {{ number_format($taxable) }}
                         @endif
                     </td>
                     <td style="font-size: 8pt;position:relative;text-align:right;padding-right: 0.5em!important;">
@@ -284,7 +282,7 @@
                             @break
                             @endswitch
                         </span>
-                        @if($invoice->taxType->rate==10)
+                        @if($taxPercent === 10)
                         {{ !empty($invoice->tax_amount) ? number_format($invoice->tax_amount) : '' }}
                         @endif
                     </td>
@@ -292,8 +290,8 @@
                 <tr>
                     <th>8%対象</th>
                     <td style="text-align: right;padding-right: 0.5em!important;">
-                        @if($invoice->taxType->rate==8)
-                        {{ !empty($invoice->total_billing) ? number_format($invoice->total_billing) : '' }}
+                        @if($taxPercent === 8 && $taxable !== null)
+                        {{ number_format($taxable) }}
                         @endif
                     </td>
                     <td style="font-size: 8pt;position:relative;text-align:right;padding-right: 0.5em!important;">
@@ -310,7 +308,7 @@
                             @break
                             @endswitch
                         </span>
-                        @if($invoice->taxType->rate==8)
+                        @if($taxPercent === 8)
                         {{ !empty($invoice->tax_amount) ? number_format($invoice->tax_amount) : '' }}
                         @endif
                     </td>

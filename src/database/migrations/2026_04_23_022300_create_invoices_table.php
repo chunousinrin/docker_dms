@@ -38,7 +38,9 @@ return new class extends Migration
             $table->date('completion_start_date')->nullable();
             $table->date('completion_end_date')->nullable();
             $table->timestamps();
+            $table->softDeletes();                       // deleted_at
             $table->foreignId('estimate_id')->nullable()->constrained();
+            $table->unsignedBigInteger('estimate_id')->nullable()->after('project_id')->index();
         });
     }
 
@@ -47,6 +49,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('invoices');
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->dropIndex(['estimate_id']);
+            $table->dropColumn('estimate_id');
+        });
     }
 };

@@ -33,16 +33,17 @@ Route::middleware('auth')->group(function () {
 
     // Invoices
     Route::controller(InvoiceController::class)->prefix('invoices')->name('invoices.')->group(function () {
-        // 送状（transmittal）関連のルート
+        Route::get('/create-from-estimate/{estimate}', 'createFromEstimate')->name('create-from-estimate');
+
+        // 送付案内
         Route::get('/transmittal', 'transmittalForm')->name('transmittal');
+        Route::post('/transmittal_pdf', 'generateTransmittalPdf')->name('transmittal_pdf'); // GET→POST
 
-        // ★ ここを Route::post から Route::get に変更します
-        Route::get('/transmittal_pdf', 'generateTransmittalPdf')->name('transmittal_pdf');
-
-        // プレビュー・ダウンロード系
+        // プレビュー・PDF
         Route::post('/preview', 'preview')->name('preview');
-        Route::get('/{invoice}/download', 'download')->name('download');
         Route::get('/{invoice}/pdf', 'downloadPdf')->name('pdf');
+        Route::patch('/{invoice}/restore', 'restore')->name('restore')->withTrashed();
+        // download は削除
     });
 
     // 通常のCRUDルート
