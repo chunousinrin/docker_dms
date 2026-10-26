@@ -45,7 +45,8 @@ Route::middleware('auth')->group(function () {
 
     // Transactions（電子帳簿保存）
     // ※ {transaction} より前に定義すること（"saved" が ID として解釈されるのを防ぐ）
-    Route::get('transactions/saved', [TransactionController::class, 'saved'])->name('transactions.saved');
+        Route::get('transactions/saved', [TransactionController::class, 'saved'])->name('transactions.saved');
+    Route::get('transactions/export', [TransactionController::class, 'export'])->name('transactions.export'); // 追加
 
     // 更新(edit/update)は存在しない。destroy は「取消」（論理削除）。取消済みの詳細も show で閲覧可能
     Route::resource('transactions', TransactionController::class)

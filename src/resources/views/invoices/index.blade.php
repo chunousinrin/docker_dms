@@ -100,7 +100,7 @@
                 <a href="{{ route('invoices.index') }}" class="btn-reset btn btn-sm shadow-sm">
                     <i class="fas fa-undo-alt mr-1"></i> 条件をリセット
                 </a>
-                <button type="submit" class="btn btn-sm btn-primary px-4 shadow-sm shadow-sm">
+                <button type="submit" class="btn btn-sm btn-primary px-4 shadow-sm">
                     <i class="fas fa-search mr-2"></i> この条件で絞り込む
                 </button>
             </div>

@@ -18,6 +18,7 @@ class TransactionAuditLog extends Model
         'voided'          => '取消',
         'file_viewed'     => '証憑閲覧',
         'integrity_error' => '整合性エラー',
+        'csv_exported'    => 'CSV出力',
     ];
 
     protected $fillable = [

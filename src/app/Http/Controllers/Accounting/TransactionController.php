@@ -9,6 +9,7 @@ use App\Models\Accounting\TransactionAuditLog;
 use App\Models\Accounting\TransactionFile;
 use App\Models\Master\Customer;
 use App\Services\TransactionStorageService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +23,79 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
+        $transactions = $this->filteredQuery($request)
+            ->with(['files', 'user'])
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString(); // ページ送りで検索条件を維持
+
+        return view('transactions.index', compact('transactions'));
+    }
+
+    /**
+     * 検索結果のCSV出力（税務調査等での提示用）。現在の検索条件をそのまま引き継ぐ。
+     */
+    public function export(Request $request)
+    {
+        $query = $this->filteredQuery($request);
+        $count = (clone $query)->count();
+
+        // 誰がどの条件で何件出力したかを記録（個人情報・取引情報の持ち出し履歴）
+        TransactionAuditLog::record('csv_exported', null, null, null, [
+            'filters' => $request->only(['customer_name', 'date_from', 'date_to', 'amount_min', 'amount_max', 'include_void']),
+            'count'   => $count,
+        ]);
+
+        $query->with(['files', 'user', 'deleter'])
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('id');
+
+        $filename = 'transactions_' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // UTF-8 BOM（Excelでの文字化け防止）
+
+            $this->putCsv($out, [
+                '取引ID', '取引年月日', '取引先名', '取引金額', '書類種別', '証憑ファイル名',
+                '証憑SHA-256', '登録者', '登録日時', '状態', '取消日時', '取消者', '取消理由', '備考',
+            ]);
+
+            // 大量件数でもメモリを使い切らないよう分割して出力
+            $query->chunk(500, function ($transactions) use ($out) {
+                foreach ($transactions as $t) {
+                    $this->putCsv($out, [
+                        $t->id,
+                        $t->transaction_date->format('Y-m-d'),
+                        $t->customer_name,
+                        $t->amount,
+                        $t->files->pluck('file_type')->implode(' / '),
+                        $t->files->pluck('original_filename')->implode(' / '),
+                        $t->files->pluck('file_hash')->implode(' / '),
+                        $t->user->name ?? '',
+                        $t->created_at->format('Y-m-d H:i:s'),
+                        $t->trashed() ? '取消済' : '有効',
+                        $t->deleted_at?->format('Y-m-d H:i:s') ?? '',
+                        $t->deleter->name ?? '',
+                        $t->void_reason ?? '',
+                        $t->note ?? '',
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $filename, [
+            'Content-Type'           => 'text/csv; charset=UTF-8',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * 検索条件の検証と絞り込み（一覧とCSV出力で共通）
+     */
+    private function filteredQuery(Request $request): Builder
+    {
         $request->validate([
             'customer_name' => ['nullable', 'string', 'max:255'],
             'date_from'     => ['nullable', 'date'],
@@ -31,7 +105,7 @@ class TransactionController extends Controller
             'include_void'  => ['nullable', 'boolean'],
         ]);
 
-        $query = Transaction::with(['files', 'user']);
+        $query = Transaction::query();
 
         // 取消済みを含めるか（既定は含めない。含めた場合も記録は検索・閲覧可能）
         if ($request->boolean('include_void')) {
@@ -56,13 +130,23 @@ class TransactionController extends Controller
             $query->where('customer_name', 'like', "%{$keyword}%");
         }
 
-        $transactions = $query
-            ->orderByDesc('transaction_date')
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString(); // ページ送りで検索条件を維持
+        return $query;
+    }
 
-        return view('transactions.index', compact('transactions'));
+    /**
+     * CSV 1行を書き出す。Excel の数式実行(CSVインジェクション)対策として、
+     * 文字列が = + - @ タブ CR で始まる場合は先頭に ' を付けて無害化する。
+     */
+    private function putCsv($handle, array $row): void
+    {
+        $row = array_map(function ($v) {
+            if (is_string($v) && $v !== '' && preg_match('/^[=+\-@\t\r]/', $v)) {
+                return "'" . $v;
+            }
+            return $v;
+        }, $row);
+
+        fputcsv($handle, $row, ',', '"', '\\', "\r\n");
     }
 
     public function create()
