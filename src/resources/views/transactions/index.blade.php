@@ -12,12 +12,30 @@
 
 @section('content')
 <div class="container-fluid">
+
+    {{-- フラッシュメッセージ・エラー --}}
+    @if (session('success'))
+    <div class="alert alert-success py-2 small">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+    <div class="alert alert-danger py-2 small">{{ session('error') }}</div>
+    @endif
+    @if ($errors->any())
+    <div class="alert alert-danger py-2 small">
+        <ul class="mb-0 pl-3">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
     {{-- 検索パネル --}}
     <div class="card search-card mb-4">
         <div class="card-body p-4">
             <form method="GET" action="{{ route('transactions.index') }}" id="search-form">
 
-                {{-- ① 取引先名（キーワード） --}}
+                {{-- ① 取引先名 --}}
                 <div class="form-group mb-3">
                     <label class="field-label">取引先名検索</label>
                     <input type="text" name="customer_name" value="{{ request('customer_name') }}"
@@ -49,6 +67,11 @@
                     </div>
                 </div>
 
+                <div class="custom-control custom-checkbox small">
+                    <input type="checkbox" class="custom-control-input" id="include_void" name="include_void" value="1" @checked(request()->boolean('include_void'))>
+                    <label class="custom-control-label" for="include_void">取消済みの取引も表示する</label>
+                </div>
+
                 {{-- アクションバー --}}
                 <div class="action-bar d-flex justify-content-between align-items-center mt-3">
                     <a href="{{ route('transactions.index') }}" class="btn-reset">
@@ -78,60 +101,86 @@
                             <th>取引先名</th>
                             <th class="text-right" style="width: 150px;">取引金額</th>
                             <th>関連書類</th>
-                            <th>登録者</th> {{-- 追加 --}}
+                            <th>登録者</th>
                             <th class="text-center" style="width: 150px;">登録日</th>
                             <th class="text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($transactions as $t)
-                        <tr>
-                            <td class="text-center">{{ $t->transaction_date }}</td>
-                            <td class="font-weight-bold text-secondary">{{ $t->customer_name }}</td>
+                        <tr @class(['text-muted' => $t->trashed()])>
+                            <td class="text-center">{{ $t->transaction_date->format('Y-m-d') }}</td>
+                            <td class="font-weight-bold text-secondary">
+                                {{ $t->customer_name }}
+                                @if($t->trashed())
+                                <span class="badge badge-secondary ml-1">取消済</span>
+                                @endif
+                            </td>
                             <td class="text-right">{{ number_format($t->amount) }} 円</td>
                             <td>
                                 @foreach($t->files as $file)
-
-                                <span class="badge badge-info" style="font-size: 0.7rem;">{{ $file->file_type }}</span>
-
+                                <a href="{{ route('transaction-files.view', $file) }}" target="_blank" rel="noopener">
+                                    <span class="badge badge-info" style="font-size: 0.7rem;">{{ $file->file_type }}</span>
+                                </a>
                                 @endforeach
-
                             </td>
-                            <td>{{ $t->user->name ?? '不明' }}</td> {{-- 追加 --}}
+                            <td>{{ $t->user->name ?? '不明' }}</td>
                             <td class="text-center">{{ $t->created_at->format('Y-m-d') }}</td>
                             <td class="text-center" style="width: 0!important;white-space: nowrap;">
-                                {{-- 詳細ボタン --}}
+                                {{-- 詳細 --}}
                                 <button type="button"
                                     class="btn btn-sm btn-light px-2 shadow-sm"
                                     data-src="{{ route('transactions.show', $t->id) }}"
                                     data-fancybox
-                                    data-type="iframe"> <i class=" fas fa-info"></i>
+                                    data-type="iframe"> <i class="fas fa-info"></i>
                                 </button>
 
-                                {{-- 削除ボタン（請求書一覧のデザインに準拠） --}}
-                                <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" class="d-inline"
-                                    onsubmit="return confirm('取引先: {{ $t->customer_name }}\n金額: ￥{{ number_format($t->amount) }}\nこのデータを削除してもよろしいですか?');">
+                                {{-- 取消（物理削除ではない）。取引先名等は data 属性で渡し、JS文字列には埋め込まない --}}
+                                @can('cancel', $t)
+                                <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" class="d-inline js-void-form"
+                                    data-customer="{{ $t->customer_name }}"
+                                    data-amount="{{ number_format($t->amount) }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-light px-2 shadow-sm">
-                                        <i class="fas fa-trash-alt"></i>
+                                    <input type="hidden" name="void_reason" value="">
+                                    <button type="submit" class="btn btn-sm btn-light px-2 shadow-sm" title="取消">
+                                        <i class="fas fa-ban"></i>
                                     </button>
                                 </form>
+                                @endcan
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">該当するデータは見つかりませんでした。</td>
+                            <td colspan="7" class="text-center py-5 text-muted">該当するデータは見つかりませんでした。</td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
-        {{-- ページャ --}}
+        {{-- ページャ（検索条件はコントローラ側の withQueryString() で維持） --}}
         <div class="card-footer clearfix">
             {{ $transactions->links() }}
         </div>
     </div>
 </div>
+
+<script>
+    document.querySelectorAll('.js-void-form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            const reason = window.prompt(
+                '取引先: ' + form.dataset.customer + '\n' +
+                '金額: ￥' + form.dataset.amount + '\n\n' +
+                'この取引を取消します。証憑ファイルと履歴は削除されず、保存されます。\n' +
+                '取消理由を入力してください:'
+            );
+            if (reason === null || reason.trim() === '') {
+                e.preventDefault();
+                return;
+            }
+            form.elements.void_reason.value = reason.trim();
+        });
+    });
+</script>
 @endsection

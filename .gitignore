@@ -1,11 +1,58 @@
-# Laravel（src内）の除外設定
+# ===== 環境変数・秘密情報（docker-compose用 dms/.env、Laravel用 src/.env 共通）=====
+.env
+.env.*
+!.env.example
+auth.json
+/src/auth.json
+
+# ===== 証憑ファイル・DBダンプ・バックアップ（Gitに入れない）=====
+/data/
+/backup/
+*.sql
+*.sql.gz
+
+# ===== Docker関連の秘密情報（将来の rclone 用。OneDrive のトークンを含む）=====
+/docker/rclone/rclone.conf
+
+# ===== Laravel (src) 依存物・ビルド成果物 =====
 /src/vendor/
 /src/node_modules/
-/src/.env
-/src/storage/*.key
-/src/public/storage
 /src/public/hot
+/src/public/storage
+/src/storage/*.key
+/src/storage/pail/
+/src/.phpunit.cache/
+/src/.phpunit.result.cache
+/src/Homestead.json
+/src/Homestead.yaml
 
-# Docker関連で除外するもの（必要に応じて）
-# 例: MySQLのデータ保存先を docker/mysql/data にしている場合など
-/docker/mysql/data/
+# ===== Laravel (src) 実行時ディレクトリ（中身は無視、ディレクトリは .gitkeep で維持）=====
+/src/bootstrap/cache/*
+
+# storage/app: private と public 以外（transaction など）は丸ごと無視
+/src/storage/app/*
+!/src/storage/app/private/
+!/src/storage/app/public/
+/src/storage/app/private/*
+/src/storage/app/public/*
+
+/src/storage/framework/cache/*
+!/src/storage/framework/cache/data/
+/src/storage/framework/cache/data/*
+/src/storage/framework/sessions/*
+/src/storage/framework/testing/*
+/src/storage/framework/views/*
+/src/storage/logs/*
+
+# 上の無視ルールより後ろに置くこと（ディレクトリ維持用のファイルだけ追跡する）
+!.gitkeep
+
+# ===== エディタ・OS =====
+.idea/
+.vscode/
+.fleet/
+.nova/
+.zed/
+.DS_Store
+Thumbs.db
+*.log

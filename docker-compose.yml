@@ -3,12 +3,15 @@ services:
     build:
       context: ./docker/php
     container_name: dms_app
-    restart: unless-stopped # ← ここに追加
+    restart: unless-stopped
     volumes:
       - ./src:/var/www/html
+      # 証憑ファイルはソースツリーの外(./data)に置く。デプロイ(rsync/git)で消えない・誤公開されない
+      - ./data/transaction:/var/www/html/storage/app/transaction
     working_dir: /var/www/html
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   webserver:
     image: nginx:stable-alpine
@@ -17,8 +20,8 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - ./src:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./src:/var/www/html:ro   # nginx は読み取りのみ。証憑ディレクトリはマウントしない
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
 
@@ -27,14 +30,20 @@ services:
     container_name: dms_db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: dms
-      MYSQL_USER: dms_user
-      MYSQL_PASSWORD: dms_pass
-      MYSQL_ROOT_PASSWORD: root_pass
+      MYSQL_DATABASE: ${DB_DATABASE:-dms}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    # ホストからのみ接続可（外部から3306を直接叩けないようにする）
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - dms_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -42,10 +51,10 @@ services:
     restart: unless-stopped
     environment:
       PMA_HOST: db
-      PMA_USER: root
-      PMA_PASSWORD: root_pass
+      # PMA_USER/PMA_PASSWORD は設定しない（root自動ログインをやめ、ログイン画面で認証する）
+    # ホストからのみ。外から使う場合は SSH トンネル: ssh -L 8081:127.0.0.1:8081 user@server
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     depends_on:
       - db
 
