@@ -12,14 +12,12 @@
 @stop
 
 @section('content')
-<div class="container-fluid">
-    <form method="POST"
-        action="{{ route('purchase-orders.store') }}"
-        autocomplete="off">
+<form method="POST"
+    action="{{ route('purchase-orders.store') }}"
+    autocomplete="off">
 
-        @csrf
+    @csrf
 
-        @include('purchase_orders.form')
-    </form>
-</div>
+    @include('purchase_orders.form')
+</form>
 @endsection

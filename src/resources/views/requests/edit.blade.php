@@ -12,33 +12,31 @@
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <form id="mainForm" method="POST" action="{{ route('requests.update', $ringi->id) }}" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
+<form id="mainForm" method="POST" action="{{ route('requests.update', $ringi->id) }}" enctype="multipart/form-data">
+    @csrf
+    @method('PUT')
 
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card card-outline card-success">
-                    <div class="card-header">
-                        <h3 class="card-title">稟議書編集</h3>
-                    </div>
-                    <div class="card-body">
-                        @include('requests.partials.form')
-                    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card card-outline card-success">
+                <div class="card-header">
+                    <h3 class="card-title">稟議書編集</h3>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card card-outline card-info shadow-sm">
-                    @include('requests.partials.attachments', [
-                    'ringi' => $ringi
-                    ])
+                <div class="card-body">
+                    @include('requests.partials.form')
                 </div>
             </div>
         </div>
-    </form>
-</div>
+
+        <div class="col-md-4">
+            <div class="card card-outline card-info shadow-sm">
+                @include('requests.partials.attachments', [
+                'ringi' => $ringi
+                ])
+            </div>
+        </div>
+    </div>
+</form>
 @endsection
 
 @section('css')

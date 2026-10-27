@@ -10,201 +10,197 @@
 </div>
 @stop
 @section('content')
-<div class="container-fluid">
-    <div class="card search-card mb-4 mt-2">
-        <div class="card-body p-4">
-            <form action="{{ route('sinrinbo.search') }}" method="GET" id="search-form">
-                @php
-                $junList = ['', 'イ', 'ロ', 'ハ', 'ニ', 'ホ', 'ヘ', 'ト', 'チ', 'リ', 'ヌ', 'ル', 'ヲ', 'ワ', 'カ', 'ヨ', 'タ', 'レ', 'ソ', 'ツ', 'ネ', 'ナ', 'ラ', 'ム'];
-                @endphp
+<div class="card search-card mb-4 mt-2">
+    <div class="card-body p-4">
+        <form action="{{ route('sinrinbo.search') }}" method="GET" id="search-form">
+            @php
+            $junList = ['', 'イ', 'ロ', 'ハ', 'ニ', 'ホ', 'ヘ', 'ト', 'チ', 'リ', 'ヌ', 'ル', 'ヲ', 'ワ', 'カ', 'ヨ', 'タ', 'レ', 'ソ', 'ツ', 'ネ', 'ナ', 'ラ', 'ム'];
+            @endphp
 
-                <div class="form-row mb-3">
-                    <div class="form-group col-md-1">
-                        <label class="field-label">年度</label>
-                        <input type="number" name="年度" id="year-input" class="form-control form-control-sm text-center font-weight-bold" value="{{ request('年度') }}" required placeholder="西暦で入力">
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label class="field-label">市町村</label>
-                        <select name="市町村" id="city-select" class="form-control form-control-sm">
-                            <option value="">すべて</option>
-                            @foreach($cities as $city)
-                            <option value="{{ $city }}" {{ request('市町村') == $city ? 'selected' : '' }}>{{ $city }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label class="field-label">大字</label>
-                        <select name="大字" id="oaza-select" class="form-control form-control-sm">
-                            <option value="">すべて</option>
-                            @if(request('大字')) <option value="{{ request('大字') }}" selected>{{ request('大字') }}</option> @endif
-                        </select>
-                    </div>
-                    <div class="form-group col-md-2">
-                        <label class="field-label">字</label>
-                        <select name="字" id="aza-select" class="form-control form-control-sm">
-                            <option value="">すべて</option>
-                            @if(request('字')) <option value="{{ request('字') }}" selected>{{ request('字') }}</option> @endif
-                        </select>
-                    </div>
-                    <div class="form-group col-md-5">
-                        <label class="field-label">所有者</label>
-                        <input type="text" name="所有者" class="form-control form-control-sm" value="{{ request('所有者') }}" placeholder="所有者">
-                    </div>
+            <div class="form-row mb-3">
+                <div class="form-group col-md-1">
+                    <label class="field-label">年度</label>
+                    <input type="number" name="年度" id="year-input" class="form-control form-control-sm text-center font-weight-bold" value="{{ request('年度') }}" required placeholder="西暦で入力">
                 </div>
-
-                <div class="range-flex-container">
-                    <div class="range-box">
-                        <label class="field-label text-primary">● 範囲開始 (林班 / 準林班 / 小班 / 枝番)</label>
-                        <div class="form-row no-gutters">
-                            <div class="col px-1"><input type="number" name="林班_from" class="form-control form-control-sm" value="{{ request('林班_from') }}" placeholder="林班"></div>
-                            <div class="col px-1">
-                                <select name="準林班_from" class="form-control form-control-sm">
-                                    @foreach($junList as $jun) <option value="{{ $jun }}" {{ request('準林班_from') == $jun ? 'selected' : '' }}>{{ $jun ?: '準林班' }}</option> @endforeach
-                                </select>
-                            </div>
-                            <div class="col px-1"><input type="number" name="小班_from" class="form-control form-control-sm" value="{{ request('小班_from') }}" placeholder="小班"></div>
-                            <div class="col px-1"><input type="number" name="枝番_from" class="form-control form-control-sm" value="{{ request('枝番_from') }}" placeholder="枝番"></div>
-                        </div>
-                    </div>
-
-                    <div class="range-separator">～</div>
-
-                    <div class="range-box">
-                        <label class="field-label text-danger">● 範囲終了 (林班 / 準林班 / 小班 / 枝番)</label>
-                        <div class="form-row no-gutters">
-                            <div class="col px-1"><input type="number" name="林班_to" class="form-control form-control-sm" value="{{ request('林班_to') }}" placeholder="林班"></div>
-                            <div class="col px-1">
-                                <select name="準林班_to" class="form-control form-control-sm">
-                                    @foreach($junList as $jun) <option value="{{ $jun }}" {{ request('準林班_to') == $jun ? 'selected' : '' }}>{{ $jun ?: '準林班' }}</option> @endforeach
-                                </select>
-                            </div>
-                            <div class="col px-1"><input type="number" name="小班_to" class="form-control form-control-sm" value="{{ request('小班_to') }}" placeholder="小班"></div>
-                            <div class="col px-1"><input type="number" name="枝番_to" class="form-control form-control-sm" value="{{ request('枝番_to') }}" placeholder="枝番"></div>
-                        </div>
-                    </div>
+                <div class="form-group col-md-2">
+                    <label class="field-label">市町村</label>
+                    <select name="市町村" id="city-select" class="form-control form-control-sm">
+                        <option value="">すべて</option>
+                        @foreach($cities as $city)
+                        <option value="{{ $city }}" {{ request('市町村') == $city ? 'selected' : '' }}>{{ $city }}</option>
+                        @endforeach
+                    </select>
                 </div>
-
-                <div class="action-bar d-flex justify-content-between align-items-center">
-                    <a href="{{ route('sinrinbo.search') }}" class="btn-reset">
-                        <i class="fas fa-undo mr-1"></i> リセット
-                    </a>
-                    <div>
-                        <button type="button" id="btn-excel" class="btn btn-sm btn-secondary px-3">
-                            <i class="fas fa-file-csv mr-1"></i> CSV出力
-                        </button>
-                        <button type="submit" class="btn btn-sm btn-primary px-4">
-                            <i class="fas fa-search mr-2"></i> 検索
-                        </button>
-                    </div>
+                <div class="form-group col-md-2">
+                    <label class="field-label">大字</label>
+                    <select name="大字" id="oaza-select" class="form-control form-control-sm">
+                        <option value="">すべて</option>
+                        @if(request('大字')) <option value="{{ request('大字') }}" selected>{{ request('大字') }}</option> @endif
+                    </select>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    @if($results)
-    <div class="card search-card mb-0">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
-            <h5 class="m-0 h6 font-weight-bold text-success"><i class="fas fa-list-ul mr-1"></i> 検索結果: {{ number_format($results->total()) }} 件</h5>
-            <small class="text-muted"><i class="fas fa-info-circle"></i> 横にスライドして全項目を確認できます。</small>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive-custom" style="max-height: 60vh;">
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th>詳細</th>
-                            <th>年度</th>
-                            <th>計画区</th>
-                            <th>県事務所</th>
-                            <th>新市町村</th>
-                            <th>市町村</th>
-                            <th>林班</th>
-                            <th>準林班</th>
-                            <th>小班</th>
-                            <th>枝番</th>
-                            <th>大字</th>
-                            <th>字</th>
-                            <th>地番</th>
-                            <th>現に所有者番号</th>
-                            <th class="text-num">面積 (㎡)</th>
-                            <th>施業方法</th>
-                            <th>第1林種</th>
-                            <th>第1樹種</th>
-                            <th>第1林齢</th>
-                            <th>標高</th>
-                            <th>傾斜</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($results as $row)
-                        <tr>
-                            <td>
-                                <button type="button"
-                                    class="btn btn-xs btn-success btn-detail"
-                                    data-item="{{ json_encode($row) }}">
-                                    <i class="fas fa-eye"></i> 詳細
-                                </button>
-                            </td>
-                            <td>{{ $row->年度 }}</td>
-                            <td>{{ $row->計画区 }}</td>
-                            <td>{{ $row->県事務所 }}</td>
-                            <td>{{ $row->新市町村 }}</td>
-                            <td>{{ $row->市町村 }}</td>
-                            <td>{{ $row->林班 }}</td>
-                            <td>{{ $row->準林班 }}</td>
-                            <td>{{ $row->小班 }}</td>
-                            <td>{{ $row->枝番 }}</td>
-                            <td>{{ $row->大字 }}</td>
-                            <td>{{ $row->字 }}</td>
-                            <td>{{ $row->地番 }}</td>
-                            <td>{{ $row->現に所有者番号 }}</td>
-                            <td class="text-num font-weight-bold">{{ number_format($row->面積, 2) }}</td>
-                            <td>{{ $row->施業方法 }}</td>
-                            <td>{{ $row->第1林種 }}</td>
-                            <td>{{ $row->第1樹種 }}</td>
-                            <td>{{ $row->第1林齢 }}</td>
-                            <td>{{ $row->標高 }}</td>
-                            <td>{{ $row->傾斜 }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="20" class="text-center py-5 text-muted">データが見つかりませんでした。</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <div class="form-group col-md-2">
+                    <label class="field-label">字</label>
+                    <select name="字" id="aza-select" class="form-control form-control-sm">
+                        <option value="">すべて</option>
+                        @if(request('字')) <option value="{{ request('字') }}" selected>{{ request('字') }}</option> @endif
+                    </select>
+                </div>
+                <div class="form-group col-md-5">
+                    <label class="field-label">所有者</label>
+                    <input type="text" name="所有者" class="form-control form-control-sm" value="{{ request('所有者') }}" placeholder="所有者">
+                </div>
             </div>
-        </div>
-        <div class="pagination-wrapper d-flex justify-content-center py-3">
-            {{ $results->appends(request()->input())->links() }}
-        </div>
-    </div>
-    @endif
 
+            <div class="range-flex-container">
+                <div class="range-box">
+                    <label class="field-label text-primary">● 範囲開始 (林班 / 準林班 / 小班 / 枝番)</label>
+                    <div class="form-row no-gutters">
+                        <div class="col px-1"><input type="number" name="林班_from" class="form-control form-control-sm" value="{{ request('林班_from') }}" placeholder="林班"></div>
+                        <div class="col px-1">
+                            <select name="準林班_from" class="form-control form-control-sm">
+                                @foreach($junList as $jun) <option value="{{ $jun }}" {{ request('準林班_from') == $jun ? 'selected' : '' }}>{{ $jun ?: '準林班' }}</option> @endforeach
+                            </select>
+                        </div>
+                        <div class="col px-1"><input type="number" name="小班_from" class="form-control form-control-sm" value="{{ request('小班_from') }}" placeholder="小班"></div>
+                        <div class="col px-1"><input type="number" name="枝番_from" class="form-control form-control-sm" value="{{ request('枝番_from') }}" placeholder="枝番"></div>
+                    </div>
+                </div>
 
+                <div class="range-separator">～</div>
 
+                <div class="range-box">
+                    <label class="field-label text-danger">● 範囲終了 (林班 / 準林班 / 小班 / 枝番)</label>
+                    <div class="form-row no-gutters">
+                        <div class="col px-1"><input type="number" name="林班_to" class="form-control form-control-sm" value="{{ request('林班_to') }}" placeholder="林班"></div>
+                        <div class="col px-1">
+                            <select name="準林班_to" class="form-control form-control-sm">
+                                @foreach($junList as $jun) <option value="{{ $jun }}" {{ request('準林班_to') == $jun ? 'selected' : '' }}>{{ $jun ?: '準林班' }}</option> @endforeach
+                            </select>
+                        </div>
+                        <div class="col px-1"><input type="number" name="小班_to" class="form-control form-control-sm" value="{{ request('小班_to') }}" placeholder="小班"></div>
+                        <div class="col px-1"><input type="number" name="枝番_to" class="form-control form-control-sm" value="{{ request('枝番_to') }}" placeholder="枝番"></div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="detailModalLabel"><i class="fas fa-file-alt mr-2"></i>林地台帳 詳細情報</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+            <div class="action-bar d-flex justify-content-between align-items-center">
+                <a href="{{ route('sinrinbo.search') }}" class="btn-reset">
+                    <i class="fas fa-undo mr-1"></i> リセット
+                </a>
+                <div>
+                    <button type="button" id="btn-excel" class="btn btn-sm btn-secondary px-3">
+                        <i class="fas fa-file-csv mr-1"></i> CSV出力
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-primary px-4">
+                        <i class="fas fa-search mr-2"></i> 検索
                     </button>
                 </div>
-                <div class="modal-body bg-light">
-                    <div id="detail-content" class="row">
-                    </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if($results)
+<div class="card search-card mb-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+        <h5 class="m-0 h6 font-weight-bold text-success"><i class="fas fa-list-ul mr-1"></i> 検索結果: {{ number_format($results->total()) }} 件</h5>
+        <small class="text-muted"><i class="fas fa-info-circle"></i> 横にスライドして全項目を確認できます。</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive-custom" style="max-height: 60vh;">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>詳細</th>
+                        <th>年度</th>
+                        <th>計画区</th>
+                        <th>県事務所</th>
+                        <th>新市町村</th>
+                        <th>市町村</th>
+                        <th>林班</th>
+                        <th>準林班</th>
+                        <th>小班</th>
+                        <th>枝番</th>
+                        <th>大字</th>
+                        <th>字</th>
+                        <th>地番</th>
+                        <th>現に所有者番号</th>
+                        <th class="text-num">面積 (㎡)</th>
+                        <th>施業方法</th>
+                        <th>第1林種</th>
+                        <th>第1樹種</th>
+                        <th>第1林齢</th>
+                        <th>標高</th>
+                        <th>傾斜</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($results as $row)
+                    <tr>
+                        <td>
+                            <button type="button"
+                                class="btn btn-xs btn-success btn-detail"
+                                data-item="{{ json_encode($row) }}">
+                                <i class="fas fa-eye"></i> 詳細
+                            </button>
+                        </td>
+                        <td>{{ $row->年度 }}</td>
+                        <td>{{ $row->計画区 }}</td>
+                        <td>{{ $row->県事務所 }}</td>
+                        <td>{{ $row->新市町村 }}</td>
+                        <td>{{ $row->市町村 }}</td>
+                        <td>{{ $row->林班 }}</td>
+                        <td>{{ $row->準林班 }}</td>
+                        <td>{{ $row->小班 }}</td>
+                        <td>{{ $row->枝番 }}</td>
+                        <td>{{ $row->大字 }}</td>
+                        <td>{{ $row->字 }}</td>
+                        <td>{{ $row->地番 }}</td>
+                        <td>{{ $row->現に所有者番号 }}</td>
+                        <td class="text-num font-weight-bold">{{ number_format($row->面積, 2) }}</td>
+                        <td>{{ $row->施業方法 }}</td>
+                        <td>{{ $row->第1林種 }}</td>
+                        <td>{{ $row->第1樹種 }}</td>
+                        <td>{{ $row->第1林齢 }}</td>
+                        <td>{{ $row->標高 }}</td>
+                        <td>{{ $row->傾斜 }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="20" class="text-center py-5 text-muted">データが見つかりませんでした。</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="pagination-wrapper d-flex justify-content-center py-3">
+        {{ $results->appends(request()->input())->links() }}
+    </div>
+</div>
+@endif
+
+
+
+
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="detailModalLabel"><i class="fas fa-file-alt mr-2"></i>林地台帳 詳細情報</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body bg-light">
+                <div id="detail-content" class="row">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-secondary px-3" data-dismiss="modal">閉じる</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary px-3" data-dismiss="modal">閉じる</button>
             </div>
         </div>
     </div>
-
-
 </div>
 @endsection
 

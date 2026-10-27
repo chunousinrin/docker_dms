@@ -16,20 +16,18 @@
 
 @section('content')
 
-<div class="container-fluid">
-    <div class=" card search-card mb-0">
-        <div class="card-body">
+<div class=" card search-card mb-0">
+    <div class="card-body">
 
-            <form action="{{ route('machinery-masters.store') }}"
-                method="POST">
+        <form action="{{ route('machinery-masters.store') }}"
+            method="POST">
 
-                @csrf
+            @csrf
 
-                @include('machinery.masters.form')
+            @include('machinery.masters.form')
 
-            </form>
+        </form>
 
-        </div>
     </div>
 </div>
 

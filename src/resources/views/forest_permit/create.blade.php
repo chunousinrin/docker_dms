@@ -17,21 +17,18 @@
 
 @section('content')
 
-<div class="container-fluid">
+<form method="POST" action="{{ route('forest-permit.store') }}">
+    @csrf
 
-    <form method="POST" action="{{ route('forest-permit.store') }}">
-        @csrf
+    @include('forest_permit._form')
 
-        @include('forest_permit._form')
+    <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save mr-1"></i> 登録
+    </button>
 
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save mr-1"></i> 登録
-        </button>
-
-        <a href="{{ route('forest-permit.index') }}" class="btn btn-secondary">
-            戻る
-        </a>
-    </form>
-</div>
+    <a href="{{ route('forest-permit.index') }}" class="btn btn-secondary">
+        戻る
+    </a>
+</form>
 
 @endsection

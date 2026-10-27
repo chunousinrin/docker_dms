@@ -15,22 +15,20 @@
 @endsection
 
 @section('content')
-<div class="container-fluid">
-    <div class="card search-card mb-4">
-        <div class="card-body">
+<div class="card search-card mb-4">
+    <div class="card-body">
 
-            <form action="{{ route('machinery-masters.update', $machinery) }}"
-                method="POST">
+        <form action="{{ route('machinery-masters.update', $machinery) }}"
+            method="POST">
 
-                @csrf
-                @method('PUT')
+            @csrf
+            @method('PUT')
 
-                @include('machinery.masters.form', [
-                'machinery' => $machinery
-                ])
+            @include('machinery.masters.form', [
+            'machinery' => $machinery
+            ])
 
-            </form>
-        </div>
+        </form>
     </div>
 </div>
 

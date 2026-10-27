@@ -12,113 +12,111 @@
 @stop
 
 @section('content')
-<div class="container-fluid">
-    <form action="{{ route('invoices.transmittal_pdf') }}" method="POST" id="transmittal-form">
-        @csrf
-        <div class="row">
-            {{-- 左側：基本設定 --}}
-            <div class="col-md-7">
-                <div class="card card-custom">
-                    <div class="card-body">
+<form action="{{ route('invoices.transmittal_pdf') }}" method="POST" id="transmittal-form">
+    @csrf
+    <div class="row">
+        {{-- 左側：基本設定 --}}
+        <div class="col-md-7">
+            <div class="card card-custom">
+                <div class="card-body">
 
-                        <div class="form-group row align-items-center">
-                            <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">発行日</label>
-                            <div class="col-12 col-md-10">
-                                <input type="text" name="date" value="{{ date('Y-m-d') }}" class="form-control form-control-sm datepicker text-center">
-                            </div>
+                    <div class="form-group row align-items-center">
+                        <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">発行日</label>
+                        <div class="col-12 col-md-10">
+                            <input type="text" name="date" value="{{ date('Y-m-d') }}" class="form-control form-control-sm datepicker text-center">
                         </div>
+                    </div>
 
-                        <div class="form-group row align-items-center">
-                            <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">送付先</label>
-                            <div class="col-12 col-md-10 input-group">
-                                <input type="text" name="customer_name" value="{{ $customerName }}" class="form-control form-control-sm font-weight-bold col-10" placeholder="送付先名称">
-                                <input type="text" name="honorific" value="{{ $honorific }}" class="form-control form-control-sm font-weight-bold col-2" placeholder="敬称">
-                            </div>
+                    <div class="form-group row align-items-center">
+                        <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">送付先</label>
+                        <div class="col-12 col-md-10 input-group">
+                            <input type="text" name="customer_name" value="{{ $customerName }}" class="form-control form-control-sm font-weight-bold col-10" placeholder="送付先名称">
+                            <input type="text" name="honorific" value="{{ $honorific }}" class="form-control form-control-sm font-weight-bold col-2" placeholder="敬称">
                         </div>
+                    </div>
 
-                        <div class="form-group row align-items-center">
-                            <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">担当者</label>
-                            <div class="col-12 col-md-10">
-                                <div class="input-group input-group-sm">
-                                    <input type="text" class="form-control bg-white" value="{{ $user->name }}" readonly>
-                                    <div class="input-group-append">
-                                        <div class="input-group-text">
-                                            <input type="hidden" name="show_staff" value="0">
-                                            <input type="checkbox" name="show_staff" value="1" checked id="switchStaff" title="表示する場合はチェック">
-                                        </div>
+                    <div class="form-group row align-items-center">
+                        <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">担当者</label>
+                        <div class="col-12 col-md-10">
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control bg-white" value="{{ $user->name }}" readonly>
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <input type="hidden" name="show_staff" value="0">
+                                        <input type="checkbox" name="show_staff" value="1" checked id="switchStaff" title="表示する場合はチェック">
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="form-group row align-items-center">
-                            <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">タイトル</label>
-                            <div class="col-12 col-md-10">
-                                <input type="text" name="title" value="書類送付のご案内" class="form-control form-control-sm">
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">頭語</label>
-                            <div class="col-12 col-md-10">
-                                <select class="form-control form-control-sm" name="greeting">
-                                    <option value="拝啓 / 敬具">拝啓 / 敬具</option>
-                                    <option value="謹啓 / 謹白">謹啓 / 謹白</option>
-                                    <option value="急啓 / 草々">急啓 / 草々</option>
-                                    <option value="拝復 / 敬具">拝復 / 敬具</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label class="font-weight-bold text-dark mt-2 mb-0 small col-12 col-md-2 col-form-label-sm">本文</label>
-                            <div class="col-12 col-md-10">
-                                <textarea name="body" class="form-control form-control-sm" rows="6">貴社におかれましては益々ご清栄のこととお慶び申し上げます。&#13;&#10;下記の通り、書類を送付いたしますのでご査収のほどよろしくお願い申し上げます。</textarea>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            {{-- 右側：添付書類（Sortable.js対応） --}}
-            <div class="col-md-5">
-                <div class="card card-custom">
-                    <div class="card-header bg-white p-2 d-flex justify-content-between align-items-center">
-                        <span class="font-weight-bold text-success">
-                            <i class="fas fa-paperclip mr-1"></i> 添付書類（並び替え可）
-                        </span>
-                        <button type="button" id="add-row-btn" class="btn btn-xs btn-success ml-auto">
-                            <i class="fas fa-plus mr-1"></i>行追加
-                        </button>
                     </div>
 
-                    {{-- ★ IDをご提示の js に合わせて「sortable-items」に変更 --}}
-                    <div class="card-body p-2" id="sortable-items">
-                        {{-- 初期状態の1行目 --}}
-                        <div class="d-flex align-items-center mb-2 p-2 bg-light border rounded item-row">
-                            {{-- ★ handleに指定されている「.fa-bars」を配置 --}}
-                            <div class="mr-2 text-muted" style="cursor: grab; width: 20px; text-align: center;">
-                                <i class="fas fa-bars"></i>
-                            </div>
-                            <input type="text" name="attachments[0][name]" class="form-control form-control-sm mr-1" placeholder="書類名">
-                            <input type="number" name="attachments[0][qty]" class="form-control form-control-sm mr-1 text-center input-qty" style="width: 70px;" placeholder="数量" value="1">
-                            <input type="text" name="attachments[0][unit]" class="form-control form-control-sm mr-2 text-center" style="width: 60px;" placeholder="単位" value="部">
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn"><i class="fas fa-times"></i></button>
+                    <div class="form-group row align-items-center">
+                        <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">タイトル</label>
+                        <div class="col-12 col-md-10">
+                            <input type="text" name="title" value="書類送付のご案内" class="form-control form-control-sm">
                         </div>
                     </div>
 
-                    <div class="card-footer bg-white">
-                        {{-- 7. PDF発行ボタン --}}
-                        <button type="button" id="preview-btn" class="btn btn-sm btn-secondary btn-block mb-2 shadow-sm">
-                            <i class="far fa-file-pdf mr-1"></i> PDFプレビュー
-                        </button>
+                    <div class="form-group row">
+                        <label class="font-weight-bold text-dark mb-0 small col-12 col-md-2 col-form-label-sm">頭語</label>
+                        <div class="col-12 col-md-10">
+                            <select class="form-control form-control-sm" name="greeting">
+                                <option value="拝啓 / 敬具">拝啓 / 敬具</option>
+                                <option value="謹啓 / 謹白">謹啓 / 謹白</option>
+                                <option value="急啓 / 草々">急啓 / 草々</option>
+                                <option value="拝復 / 敬具">拝復 / 敬具</option>
+                            </select>
+                        </div>
                     </div>
+
+                    <div class="form-group row">
+                        <label class="font-weight-bold text-dark mt-2 mb-0 small col-12 col-md-2 col-form-label-sm">本文</label>
+                        <div class="col-12 col-md-10">
+                            <textarea name="body" class="form-control form-control-sm" rows="6">貴社におかれましては益々ご清栄のこととお慶び申し上げます。&#13;&#10;下記の通り、書類を送付いたしますのでご査収のほどよろしくお願い申し上げます。</textarea>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
-    </form>
-</div>
+
+        {{-- 右側：添付書類（Sortable.js対応） --}}
+        <div class="col-md-5">
+            <div class="card card-custom">
+                <div class="card-header bg-white p-2 d-flex justify-content-between align-items-center">
+                    <span class="font-weight-bold text-success">
+                        <i class="fas fa-paperclip mr-1"></i> 添付書類（並び替え可）
+                    </span>
+                    <button type="button" id="add-row-btn" class="btn btn-xs btn-success ml-auto">
+                        <i class="fas fa-plus mr-1"></i>行追加
+                    </button>
+                </div>
+
+                {{-- ★ IDをご提示の js に合わせて「sortable-items」に変更 --}}
+                <div class="card-body p-2" id="sortable-items">
+                    {{-- 初期状態の1行目 --}}
+                    <div class="d-flex align-items-center mb-2 p-2 bg-light border rounded item-row">
+                        {{-- ★ handleに指定されている「.fa-bars」を配置 --}}
+                        <div class="mr-2 text-muted" style="cursor: grab; width: 20px; text-align: center;">
+                            <i class="fas fa-bars"></i>
+                        </div>
+                        <input type="text" name="attachments[0][name]" class="form-control form-control-sm mr-1" placeholder="書類名">
+                        <input type="number" name="attachments[0][qty]" class="form-control form-control-sm mr-1 text-center input-qty" style="width: 70px;" placeholder="数量" value="1">
+                        <input type="text" name="attachments[0][unit]" class="form-control form-control-sm mr-2 text-center" style="width: 60px;" placeholder="単位" value="部">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white">
+                    {{-- 7. PDF発行ボタン --}}
+                    <button type="button" id="preview-btn" class="btn btn-sm btn-secondary btn-block mb-2 shadow-sm">
+                        <i class="far fa-file-pdf mr-1"></i> PDFプレビュー
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 @stop
 
 @section('css')
