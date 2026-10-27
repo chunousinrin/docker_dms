@@ -60,6 +60,13 @@
             <td>{{ $transaction->created_at->format('Y-m-d H:i') }}</td>
         </tr>
         <tr>
+            <th class="table-th">保存期限</th>
+            <td>
+                {{ $transaction->retention_until->format('Y-m-d') }} まで
+                <span class="text-muted small">（起算日 {{ $transaction->retention_starts_on->format('Y-m-d') }}、10年）</span>
+            </td>
+        </tr>
+        <tr>
             <th class="table-th">備考</th>
             <td>{{ $transaction->note ?? '-' }}</td>
         </tr>
@@ -100,7 +107,7 @@
         </thead>
         <tbody>
             @forelse($logs as $log)
-            <tr @class(['table-danger' => $log->action === 'integrity_error'])>
+            <tr @class(['table-danger'=> $log->action === 'integrity_error'])>
                 <td>{{ $log->created_at->format('Y-m-d H:i:s') }}</td>
                 <td>{{ \App\Models\Accounting\TransactionAuditLog::LABELS[$log->action] ?? $log->action }}</td>
                 <td>{{ $log->user->name ?? '-' }}</td>

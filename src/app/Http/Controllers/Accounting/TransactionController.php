@@ -59,7 +59,7 @@ class TransactionController extends Controller
 
             $this->putCsv($out, [
                 '取引ID', '取引年月日', '取引先名', '取引金額', '書類種別', '証憑ファイル名',
-                '証憑SHA-256', '登録者', '登録日時', '状態', '取消日時', '取消者', '取消理由', '備考',
+                '証憑SHA-256', '登録者', '登録日時', '保存期限', '状態', '取消日時', '取消者', '取消理由', '備考',
             ]);
 
             // 大量件数でもメモリを使い切らないよう分割して出力
@@ -75,6 +75,7 @@ class TransactionController extends Controller
                         $t->files->pluck('file_hash')->implode(' / '),
                         $t->user->name ?? '',
                         $t->created_at->format('Y-m-d H:i:s'),
+                        $t->retention_until->format('Y-m-d'),
                         $t->trashed() ? '取消済' : '有効',
                         $t->deleted_at?->format('Y-m-d H:i:s') ?? '',
                         $t->deleter->name ?? '',

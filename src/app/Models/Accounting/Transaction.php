@@ -4,6 +4,9 @@ namespace App\Models\Accounting;
 
 use App\Models\Master\Customer;
 use App\Models\Master\User;
+use App\Support\RetentionPeriod;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -42,6 +45,37 @@ class Transaction extends Model
         static::forceDeleting(function () {
             throw new \LogicException('取引データの物理削除はできません。');
         });
+    }
+
+    /** 保存期間の起算日（確定申告書の提出期限の翌日） */
+    protected function retentionStartsOn(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => Carbon::instance(RetentionPeriod::startsOn(
+                $this->transaction_date,
+                (int) config('retention.fiscal_year_end_month'),
+                (int) config('retention.filing_extension_months'),
+            )),
+        );
+    }
+
+    /** 保存満了日（この日まで保存が必要） */
+    protected function retentionUntil(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => Carbon::instance(RetentionPeriod::until(
+                $this->transaction_date,
+                (int) config('retention.fiscal_year_end_month'),
+                (int) config('retention.years'),
+                (int) config('retention.filing_extension_months'),
+            )),
+        );
+    }
+
+    /** 保存期間を過ぎているか（過ぎていても、廃棄は別途の承認手続きが必要） */
+    public function isRetentionExpired(): bool
+    {
+        return now()->startOfDay()->gt($this->retention_until);
     }
 
     public function files()

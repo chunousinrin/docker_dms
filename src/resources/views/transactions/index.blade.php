@@ -109,6 +109,7 @@
                         <th>関連書類</th>
                         <th>登録者</th>
                         <th class="text-center" style="width: 150px;">登録日</th>
+                        <th class="text-center" style="width: 110px;">保存期限</th>
                         <th class="text-center">操作</th>
                     </tr>
                 </thead>
@@ -132,6 +133,12 @@
                         </td>
                         <td>{{ $t->user->name ?? '不明' }}</td>
                         <td class="text-center">{{ $t->created_at->format('Y-m-d') }}</td>
+                        <td class="text-center">
+                            {{ $t->retention_until->format('Y-m-d') }}
+                            @if($t->isRetentionExpired())
+                            <span class="badge badge-warning">期限経過</span>
+                            @endif
+                        </td>
                         <td class="text-center" style="width: 0!important;white-space: nowrap;">
                             {{-- 詳細 --}}
                             <button type="button"
@@ -158,7 +165,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">該当するデータは見つかりませんでした。</td>
+                        <td colspan="8" class="text-center py-5 text-muted">該当するデータは見つかりませんでした。</td>
                     </tr>
                     @endforelse
                 </tbody>
